@@ -148,6 +148,23 @@ func (a *AgentLoop) registerDefaultTools() {
 		return a.Bus.PublishOutbound(bus.NewOutboundMessage(channel, chatID, content))
 	}))
 
+	// Telegram 文件发送工具
+	a.tools.Register(tools.NewTelegramFileTool(func(channel, chatID, filePath, fileType, caption string) error {
+		// 创建媒体附件
+		mediaType := "document"
+		if fileType == "photo" {
+			mediaType = "image"
+		}
+		
+		media := &bus.MediaAttachment{
+			Type: mediaType,
+			URL:  filePath,
+		}
+		
+		// 发送带附件的消息
+		return a.Bus.PublishOutbound(bus.NewOutboundMessageWithMedia(channel, chatID, caption, media))
+	}))
+
 	// 子代理工具
 	spawnTool := tools.NewSpawnTool(func(ctx context.Context, request tools.SpawnRequest) (tools.SpawnResult, error) {
 		return a.executeSpawnRequest(ctx, request)

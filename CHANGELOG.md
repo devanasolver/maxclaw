@@ -49,6 +49,15 @@
 
 ### 变更
 
+### Added
+- **Telegram 文件发送支持**：新增 Telegram 图片和文档发送功能
+  - 扩展 `OutboundMessage` 结构支持媒体附件 (`internal/bus/events.go`)
+  - 修改 `handleOutboundMessages` 处理带附件的消息 (`internal/cli/gateway.go`)
+  - 注册 `telegram_file` 工具到 Agent (`internal/agent/loop.go`)
+  - 添加 `GetAllowedDir` 和 `GetWorkspaceDir` 工具函数 (`pkg/tools/filesystem.go`)
+  - 创建测试程序 `test_telegram_send.go`
+  - 验证：`make build && go test ./internal/channels/... -v`
+
 #### 新增执行模式（safe/ask/auto）并支持全自动无审批续跑
 - **变更**：新增 `agents.defaults.executionMode` 配置（`safe`/`ask`/`auto`）；`auto` 模式下计划任务不再提示人工输入“继续”，并自动扩大单次迭代预算；达到上限时自动停止。Gateway 设置页新增“执行模式”下拉并支持热更新。
 - **位置**：`internal/config/execution_mode.go`、`internal/config/schema.go`、`internal/config/loader.go`、`internal/agent/loop.go`、`internal/agent/context.go`、`internal/webui/server.go`、`internal/cli/status.go`、`internal/cli/gateway.go`、`internal/cli/agent.go`、`internal/cli/cron.go`、`electron/src/renderer/views/SettingsView.tsx`、`electron/src/renderer/i18n/index.ts`、`README.md`、`docs/planning.md`。

@@ -22,6 +22,16 @@ func SetWorkspaceDir(dir string) {
 	workspaceDir = strings.TrimSpace(dir)
 }
 
+// GetAllowedDir 获取允许访问的目录
+func GetAllowedDir() string {
+	return allowedDir
+}
+
+// GetWorkspaceDir 获取工作区目录
+func GetWorkspaceDir() string {
+	return workspaceDir
+}
+
 // isPathAllowed 检查路径是否允许访问
 func isPathAllowed(path string) error {
 	if allowedDir == "" {

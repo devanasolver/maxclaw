@@ -32,9 +32,10 @@ func NewInboundMessage(channel, senderID, chatID, content string) *InboundMessag
 
 // OutboundMessage 出站消息
 type OutboundMessage struct {
-	Channel string `json:"channel"`
-	ChatID  string `json:"chatId"`
-	Content string `json:"content"`
+	Channel string           `json:"channel"`
+	ChatID  string           `json:"chatId"`
+	Content string           `json:"content"`
+	Media   *MediaAttachment `json:"media,omitempty"`
 }
 
 // NewOutboundMessage 创建出站消息
@@ -43,5 +44,15 @@ func NewOutboundMessage(channel, chatID, content string) *OutboundMessage {
 		Channel: channel,
 		ChatID:  chatID,
 		Content: content,
+	}
+}
+
+// NewOutboundMessageWithMedia 创建带媒体附件的出站消息
+func NewOutboundMessageWithMedia(channel, chatID, content string, media *MediaAttachment) *OutboundMessage {
+	return &OutboundMessage{
+		Channel: channel,
+		ChatID:  chatID,
+		Content: content,
+		Media:   media,
 	}
 }

@@ -418,10 +418,54 @@ func handleOutboundMessages(ctx context.Context, bus *bus.MessageBus, registry *
 			continue
 		}
 
-		if err := ch.SendMessage(msg.ChatID, msg.Content); err != nil {
-			if lg := logging.Get(); lg != nil && lg.Channels != nil {
-				lg.Channels.Printf("send failed channel=%s chat=%s err=%v", msg.Channel, msg.ChatID, err)
+		// 检查是否有媒体附件
+		if msg.Media != nil && msg.Media.Type != "" {
+			// 尝试发送带附件的消息
+			if err := sendMessageWithMedia(ch, msg); err != nil {
+				if lg := logging.Get(); lg != nil && lg.Channels != nil {
+					lg.Channels.Printf("send media failed channel=%s chat=%s type=%s err=%v", msg.Channel, msg.ChatID, msg.Media.Type, err)
+				}
+			}
+		} else {
+			// 发送普通文本消息
+			if err := ch.SendMessage(msg.ChatID, msg.Content); err != nil {
+				if lg := logging.Get(); lg != nil && lg.Channels != nil {
+					lg.Channels.Printf("send failed channel=%s chat=%s err=%v", msg.Channel, msg.ChatID, err)
+				}
 			}
 		}
+	}
+}
+
+// sendMessageWithMedia 发送带附件的消息
+func sendMessageWithMedia(ch channels.Channel, msg *bus.OutboundMessage) error {
+	// 类型断言，检查是否支持文件发送
+	switch c := ch.(type) {
+	case interface {
+		SendPhoto(chatID string, photoPath string, caption string) error
+		SendDocument(chatID string, docPath string, caption string) error
+	}:
+		// Telegram 频道支持文件发送
+		media := msg.Media
+		if media.URL == "" {
+			return fmt.Errorf("media URL is empty")
+		}
+
+		// 根据类型调用相应的方法
+		switch media.Type {
+		case "image", "photo":
+			return c.SendPhoto(msg.ChatID, media.URL, msg.Content)
+		case "document", "file":
+			return c.SendDocument(msg.ChatID, media.URL, msg.Content)
+		default:
+			return fmt.Errorf("unsupported media type: %s", media.Type)
+		}
+	default:
+		// 频道不支持文件发送，回退到文本消息
+		content := msg.Content
+		if msg.Media != nil && msg.Media.URL != "" {
+			content = fmt.Sprintf("%s\n[附件: %s]", content, msg.Media.URL)
+		}
+		return ch.SendMessage(msg.ChatID, content)
 	}
 }

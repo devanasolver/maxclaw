@@ -1,13 +1,17 @@
 package channels
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"html"
 	"io"
+	"mime/multipart"
 	"net/http"
 	"net/url"
+	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
@@ -275,6 +279,114 @@ func (t *TelegramChannel) SendMessage(chatID string, text string) error {
 	if lg := logging.Get(); lg != nil && lg.Channels != nil {
 		lg.Channels.Printf("telegram send chat=%s text=%q", chatID, logging.Truncate(text, 300))
 	}
+	return nil
+}
+
+// SendPhoto 发送图片
+func (t *TelegramChannel) SendPhoto(chatID string, photoPath string, caption string) error {
+	if !t.enabled {
+		return fmt.Errorf("telegram channel not enabled")
+	}
+
+	return t.sendFile(chatID, photoPath, "sendPhoto", "photo", caption)
+}
+
+// SendDocument 发送文档
+func (t *TelegramChannel) SendDocument(chatID string, docPath string, caption string) error {
+	if !t.enabled {
+		return fmt.Errorf("telegram channel not enabled")
+	}
+
+	return t.sendFile(chatID, docPath, "sendDocument", "document", caption)
+}
+
+// sendFile 发送文件通用方法
+func (t *TelegramChannel) sendFile(chatID, filePath, apiMethod, fileField, caption string) error {
+	// 打开文件
+	file, err := os.Open(filePath)
+	if err != nil {
+		return fmt.Errorf("failed to open file %s: %w", filePath, err)
+	}
+	defer file.Close()
+
+	// 获取文件信息（用于验证文件存在）
+	_, err = file.Stat()
+	if err != nil {
+		return fmt.Errorf("failed to stat file %s: %w", filePath, err)
+	}
+
+	// 创建 multipart 请求体
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+
+	// 添加 chat_id
+	if err := writer.WriteField("chat_id", chatID); err != nil {
+		return fmt.Errorf("failed to write chat_id field: %w", err)
+	}
+
+	// 添加 caption（如果有）
+	if caption != "" {
+		if err := writer.WriteField("caption", caption); err != nil {
+			return fmt.Errorf("failed to write caption field: %w", err)
+		}
+	}
+
+	// 添加文件
+	part, err := writer.CreateFormFile(fileField, filepath.Base(filePath))
+	if err != nil {
+		return fmt.Errorf("failed to create form file: %w", err)
+	}
+
+	// 复制文件内容
+	if _, err := io.Copy(part, file); err != nil {
+		return fmt.Errorf("failed to copy file content: %w", err)
+	}
+
+	// 关闭 writer
+	if err := writer.Close(); err != nil {
+		return fmt.Errorf("failed to close multipart writer: %w", err)
+	}
+
+	// 发送请求
+	apiURL := fmt.Sprintf("https://api.telegram.org/bot%s/%s", t.config.Token, apiMethod)
+	req, err := http.NewRequest("POST", apiURL, body)
+	if err != nil {
+		return fmt.Errorf("failed to create request: %w", err)
+	}
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+
+	resp, err := t.httpClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("failed to send request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	// 读取响应
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("failed to read response: %w", err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("telegram API error (status %d): %s", resp.StatusCode, string(respBody))
+	}
+
+	// 解析响应验证
+	var result struct {
+		OK bool `json:"ok"`
+	}
+	if err := json.Unmarshal(respBody, &result); err != nil {
+		return fmt.Errorf("failed to parse response: %w", err)
+	}
+
+	if !result.OK {
+		return fmt.Errorf("telegram API returned not ok: %s", string(respBody))
+	}
+
+	if lg := logging.Get(); lg != nil && lg.Channels != nil {
+		lg.Channels.Printf("telegram send file chat=%s file=%s type=%s", chatID, filepath.Base(filePath), fileField)
+	}
+
 	return nil
 }
 
