@@ -159,7 +159,7 @@ func TestAgentLoopProcessMessageInjectsRuntimeContextForCron(t *testing.T) {
 
 	jobs := cronSvc.ListJobs()
 	require.Len(t, jobs, 1)
-	assert.Equal(t, "telegram", jobs[0].Payload.Channel)
+	assert.Equal(t, []string{"telegram"}, jobs[0].Payload.Channels)
 	assert.Equal(t, "chat-42", jobs[0].Payload.To)
 	assert.Equal(t, "Ping me", jobs[0].Payload.Message)
 }

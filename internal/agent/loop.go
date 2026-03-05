@@ -292,7 +292,8 @@ func (a *AgentLoop) executionModeSnapshot() string {
 }
 
 // HandleInterruption 处理插话请求
-func (a *AgentLoop) HandleInterruption(msg *bus.InboundMessage) InterruptMode {
+// explicitMode 为可选参数，如果提供则直接使用，否则通过意图分析判断
+func (a *AgentLoop) HandleInterruption(msg *bus.InboundMessage, explicitMode ...InterruptMode) InterruptMode {
 	a.icMu.RLock()
 	ic := a.currentIC
 	a.icMu.RUnlock()
@@ -302,7 +303,17 @@ func (a *AgentLoop) HandleInterruption(msg *bus.InboundMessage) InterruptMode {
 		return InterruptNone
 	}
 
-	// 分析意图
+	// 如果前端明确指定了模式，直接使用
+	if len(explicitMode) > 0 && explicitMode[0] != "" {
+		mode := explicitMode[0]
+		ic.RequestInterrupt(InterruptRequest{
+			Message: msg,
+			Mode:    mode,
+		})
+		return mode
+	}
+
+	// 否则分析意图
 	intent := a.intentAnalyzer.Analyze(msg.Content, "")
 
 	switch intent.Intent {
@@ -367,6 +378,7 @@ func (a *AgentLoop) checkIncomingMessages(ic *InterruptibleContext, currentMsg *
 		case <-ticker.C:
 			// 非阻塞检查 Bus 中是否有同一会话的新消息
 			if newMsg := a.Bus.PeekInboundForSession(currentMsg.SessionKey); newMsg != nil {
+				// 通过意图分析自动判断（不传 explicitMode）
 				a.HandleInterruption(newMsg)
 			}
 		}

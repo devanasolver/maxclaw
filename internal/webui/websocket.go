@@ -153,9 +153,8 @@ func (c *Client) readPump() {
 					mode = agent.InterruptAppend
 				}
 
-				// 设置中断模式到消息的元数据中
-				_ = mode
-				serverRef.server.agentLoop.HandleInterruption(inbound)
+				// 传递前端明确指定的模式
+				serverRef.server.agentLoop.HandleInterruption(inbound, mode)
 			}
 		}
 	}
