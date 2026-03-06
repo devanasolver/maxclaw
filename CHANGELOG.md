@@ -4,6 +4,10 @@
 
 ### Fixed
 
+- **GLM-4.7 流式回复重复修复**：修复部分模型返回累计式 `delta` 时，前端将其误当作纯增量追加，导致同一条回复在聊天窗口中重复显示的问题
+  - `electron/src/renderer/hooks/useGateway.ts`
+  - 验证：`cd electron && npm run build && make build`
+
 - **文件预览与文件树修复**：文件预览新增 HTML 页面渲染和更完整的图片格式支持，文件树修复目录展开逻辑以支持稳定的多层嵌套浏览
   - `electron/src/main/ipc.ts`、`electron/src/renderer/components/FilePreviewSidebar.tsx`、`electron/src/renderer/components/FileTreeSidebar.tsx`、`electron/src/renderer/types/electron.d.ts`、`electron/src/renderer/utils/fileReferences.ts`、`electron/src/renderer/views/ChatView.tsx`
   - 验证：`cd electron && npm run build && make build`

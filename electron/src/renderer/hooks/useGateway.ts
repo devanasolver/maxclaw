@@ -131,6 +131,39 @@ export function useGateway() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const mergeStreamDelta = (current: string, incoming: string) => {
+    if (!incoming) {
+      return { next: current, append: '' };
+    }
+
+    if (!current) {
+      return { next: incoming, append: incoming };
+    }
+
+    if (incoming === current) {
+      return { next: current, append: '' };
+    }
+
+    if (incoming.startsWith(current)) {
+      const suffix = incoming.slice(current.length);
+      return { next: incoming, append: suffix };
+    }
+
+    if (current.endsWith(incoming)) {
+      return { next: current, append: '' };
+    }
+
+    const maxOverlap = Math.min(current.length, incoming.length);
+    for (let overlap = maxOverlap; overlap > 0; overlap -= 1) {
+      if (current.slice(-overlap) === incoming.slice(0, overlap)) {
+        const suffix = incoming.slice(overlap);
+        return { next: current + suffix, append: suffix };
+      }
+    }
+
+    return { next: current + incoming, append: incoming };
+  };
+
   const parseStreamChunk = (
     raw: string,
     onDelta: (delta: string) => void,
@@ -168,8 +201,11 @@ export function useGateway() {
 
     if (parsed.delta) {
       state.sawDelta = true;
-      state.fullResponse += parsed.delta;
-      onDelta(parsed.delta);
+      const merged = mergeStreamDelta(state.fullResponse, parsed.delta);
+      state.fullResponse = merged.next;
+      if (merged.append) {
+        onDelta(merged.append);
+      }
     }
 
     if (parsed.response) {
