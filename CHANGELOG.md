@@ -36,6 +36,10 @@
   - `electron/src/renderer/views/MCPView.tsx`、`electron/src/renderer/views/SkillsView.tsx`
   - 验证：`cd electron && npm run build && make build`
 
+- **Scheduled Tasks 立即执行反馈**：点击 `Run Now` 后增加执行中状态和成功提示，避免用户无法判断任务是否已触发
+  - `electron/src/renderer/views/ScheduledTasksView.tsx`、`electron/src/renderer/i18n/index.ts`
+  - 验证：`cd electron && npm run build && make build`
+
 ### Added
 
 #### UI/UX 增强四合一功能

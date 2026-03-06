@@ -35,6 +35,7 @@ export function ScheduledTasksView() {
   const [jobs, setJobs] = useState<CronJob[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [selectedJobId, setSelectedJobId] = useState<string | undefined>(undefined);
@@ -50,6 +51,7 @@ export function ScheduledTasksView() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [jobToDelete, setJobToDelete] = useState<string | null>(null);
   const [editingJob, setEditingJob] = useState<CronJob | null>(null);
+  const [runningJobId, setRunningJobId] = useState<string | null>(null);
   const channelOptions = [
     { value: 'desktop', label: t('scheduled.channel.name.desktop') },
     { value: 'telegram', label: t('scheduled.channel.name.telegram') },
@@ -79,6 +81,14 @@ export function ScheduledTasksView() {
   }, [t]);
 
   useEffect(() => {
+    if (!success) {
+      return;
+    }
+    const timer = window.setTimeout(() => setSuccess(null), 3000);
+    return () => window.clearTimeout(timer);
+  }, [success]);
+
+  useEffect(() => {
     void fetchJobs(true);
     const timer = setInterval(() => void fetchJobs(false), 30000);
     return () => clearInterval(timer);
@@ -87,6 +97,8 @@ export function ScheduledTasksView() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      setError(null);
+      setSuccess(null);
       const payload = {
         title: formData.title,
         prompt: formData.prompt,
@@ -154,6 +166,8 @@ export function ScheduledTasksView() {
 
   const toggleJob = async (id: string, enabled: boolean) => {
     try {
+      setError(null);
+      setSuccess(null);
       const response = await fetch(`http://localhost:18890/api/cron/${id}/${enabled ? 'disable' : 'enable'}`, {
         method: 'POST'
       });
@@ -171,20 +185,30 @@ export function ScheduledTasksView() {
 
   const runJobNow = async (id: string) => {
     try {
+      setError(null);
+      setSuccess(null);
+      setRunningJobId(id);
       const response = await fetch(`http://localhost:18890/api/cron/${id}/run`, {
         method: 'POST'
       });
       if (!response.ok) throw new Error(t('scheduled.error.run'));
-      // Refresh job list to show execution status
+      const job = jobs.find((item) => item.id === id);
+      setSuccess(
+        t('scheduled.run.success').replace('{title}', job?.title || t('scheduled.run.success.defaultTitle'))
+      );
       void fetchJobs();
     } catch (err) {
       setError(err instanceof Error ? err.message : t('scheduled.error.run'));
+    } finally {
+      setRunningJobId(null);
     }
   };
 
   const confirmDeleteJob = async () => {
     if (!jobToDelete) return;
     try {
+      setError(null);
+      setSuccess(null);
       const response = await fetch(`http://localhost:18890/api/cron/${jobToDelete}`, {
         method: 'DELETE'
       });
@@ -250,6 +274,12 @@ export function ScheduledTasksView() {
         {error && (
           <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
             {error}
+          </div>
+        )}
+
+        {success && (
+          <div className="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
+            {success}
           </div>
         )}
 
@@ -488,10 +518,11 @@ export function ScheduledTasksView() {
                   <div className="ml-4 flex shrink-0 items-center gap-2">
                     <button
                       onClick={() => void runJobNow(job.id)}
-                      className="rounded-lg bg-green-500/10 px-3 py-1.5 text-xs font-medium text-green-600 hover:bg-green-500/20"
+                      disabled={runningJobId === job.id}
+                      className="rounded-lg bg-green-500/10 px-3 py-1.5 text-xs font-medium text-green-600 hover:bg-green-500/20 disabled:cursor-not-allowed disabled:opacity-60"
                       title={t('scheduled.runNow.title')}
                     >
-                      ▶ {t('scheduled.runNow')}
+                      {runningJobId === job.id ? t('scheduled.runNow.running') : `▶ ${t('scheduled.runNow')}`}
                     </button>
                     <button
                       onClick={() => void viewJobHistory(job.id)}
