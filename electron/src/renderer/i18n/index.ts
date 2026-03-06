@@ -1,3 +1,4 @@
+import { useCallback } from 'react';
 import { useSelector } from 'react-redux';
 import { RootState } from '../store';
 
@@ -420,11 +421,11 @@ const translations: Record<Language, Translations> = { zh, en };
 export function useTranslation() {
   const { language } = useSelector((state: RootState) => state.ui);
 
-  const t = (key: string): string => {
+  const t = useCallback((key: string): string => {
     const currentTranslations = translations[language as Language] || translations.zh;
     const value = currentTranslations[key];
     return typeof value === 'string' ? value : key;
-  };
+  }, [language]);
 
   return { t, language };
 }

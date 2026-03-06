@@ -8,6 +8,10 @@
   - `internal/channels/telegram.go`：使用 `html.EscapeString()` 对发送的文本进行转义
   - 验证：`go test ./internal/channels/... -v && make build`
 
+- **Scheduled Tasks 面板闪烁修复**：稳定 `useTranslation()` 返回的 `t` 函数引用，避免定时任务页面的轮询 effect 因依赖变化反复重建并触发抖动刷新
+  - `electron/src/renderer/i18n/index.ts`：将 `t` 改为 `useCallback` 并仅在 `language` 变化时更新
+  - 验证：`cd electron && npm run build && make build`
+
 ### Added
 
 #### UI/UX 增强四合一功能
