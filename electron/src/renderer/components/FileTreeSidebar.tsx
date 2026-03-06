@@ -255,23 +255,23 @@ export function FileTreeSidebar({
         <span className="text-[11px] font-semibold uppercase tracking-wide text-foreground/50">
           {sessionKey}
         </span>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1.5 rounded-xl border border-border/70 bg-card/85 p-1 shadow-sm">
           {onOpenDirectory && (
             <button
               onClick={() => onOpenDirectory(sessionDir)}
-              className="rounded-md p-1.5 text-foreground/50 transition-colors hover:bg-secondary hover:text-foreground"
+              className="inline-flex h-8 items-center justify-center rounded-lg border border-border/60 bg-background px-2.5 text-foreground/70 transition-all hover:-translate-y-px hover:border-primary/30 hover:bg-primary/5 hover:text-foreground"
               title="打开目录"
             >
-              <OpenFolderIcon className="h-3.5 w-3.5" />
+              <OpenFolderIcon className="h-4 w-4" />
             </button>
           )}
           <button
             onClick={refresh}
             disabled={loading}
-            className="rounded-md p-1.5 text-foreground/50 transition-colors hover:bg-secondary hover:text-foreground disabled:opacity-50"
+            className="inline-flex h-8 items-center justify-center rounded-lg border border-transparent px-2.5 text-foreground/55 transition-all hover:-translate-y-px hover:border-border/60 hover:bg-background hover:text-foreground disabled:translate-y-0 disabled:opacity-50"
             title="刷新"
           >
-            <RefreshIcon className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
+            <RefreshIcon className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
           </button>
         </div>
       </div>

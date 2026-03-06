@@ -52,6 +52,10 @@
   - `electron/src/renderer/views/ChatView.tsx`
   - 验证：`cd electron && npm run build && make build`
 
+- **文件树工具按钮样式优化**：优化右侧文件树头部“打开目录/刷新”按钮的视觉层级与点击反馈，提升一致性和可点击感
+  - `electron/src/renderer/components/FileTreeSidebar.tsx`
+  - 验证：`cd electron && npm run build && make build`
+
 ### Added
 
 #### UI/UX 增强四合一功能
