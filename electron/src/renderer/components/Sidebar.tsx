@@ -65,13 +65,13 @@ export function Sidebar() {
     const checkFailedJobs = async () => {
       try {
         // Fetch recent execution history
-        const response = await fetch('http://localhost:18890/api/cron/history?limit=100');
+        const response = await fetch('http://127.0.0.1:18890/api/cron/history?limit=100');
         if (!response.ok) return;
         const data = await response.json();
         const records: ExecutionRecord[] = data.records || [];
 
         // Get all job IDs
-        const jobsResponse = await fetch('http://localhost:18890/api/cron');
+        const jobsResponse = await fetch('http://127.0.0.1:18890/api/cron');
         if (!jobsResponse.ok) return;
         const jobsData = await jobsResponse.json();
         const jobIds: string[] = (jobsData.jobs || []).map((j: { id: string }) => j.id);

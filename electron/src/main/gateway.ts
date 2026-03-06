@@ -6,6 +6,8 @@ import { app } from 'electron';
 import log from 'electron-log';
 import http from 'http';
 
+const GATEWAY_HTTP_ORIGIN = 'http://127.0.0.1:18890';
+
 export interface GatewayStatus {
   state: 'running' | 'stopped' | 'error' | 'starting';
   port: number;
@@ -22,6 +24,13 @@ export class GatewayManager {
   async start(): Promise<void> {
     if (this.process) {
       log.info('Gateway already running');
+      return;
+    }
+
+    if (await this.healthCheck()) {
+      log.info('Detected existing healthy Gateway on port 18890, reusing it');
+      this.status = { state: 'running', port: 18890 };
+      this.restartAttempts = 0;
       return;
     }
 
@@ -114,7 +123,11 @@ export class GatewayManager {
   async startFresh(): Promise<void> {
     log.info('Starting Gateway with fresh restart...');
     await this.stop();
-    await this.terminateExistingGatewayProcesses();
+    if (!(await this.healthCheck())) {
+      await this.terminateExistingGatewayProcesses();
+    } else {
+      log.info('Healthy Gateway already available, skipping external cleanup');
+    }
     await this.start();
   }
 
@@ -152,7 +165,7 @@ export class GatewayManager {
 
   async healthCheck(): Promise<boolean> {
     return new Promise((resolve) => {
-      const req = http.get('http://localhost:18890/api/status', (res) => {
+      const req = http.get(`${GATEWAY_HTTP_ORIGIN}/api/status`, (res) => {
         resolve(res.statusCode === 200);
       });
 

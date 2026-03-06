@@ -925,7 +925,7 @@ export function createIPCHandlers(
   if (notificationManager) {
     const notificationTimer = setInterval(async () => {
       try {
-        const response = await fetch('http://localhost:18890/api/notifications/pending');
+        const response = await fetch('http://127.0.0.1:18890/api/notifications/pending');
         if (!response.ok) return;
 
         const notifications = await response.json();
@@ -937,7 +937,7 @@ export function createIPCHandlers(
           });
 
           // Mark as delivered
-          await fetch(`http://localhost:18890/api/notifications/${notif.id}/delivered`, {
+          await fetch(`http://127.0.0.1:18890/api/notifications/${notif.id}/delivered`, {
             method: 'POST'
           });
         }
@@ -990,8 +990,8 @@ export function createIPCHandlers(
 
       // Fetch data from Gateway
       const [configRes, sessionsRes] = await Promise.all([
-        fetch('http://localhost:18890/api/config'),
-        fetch('http://localhost:18890/api/sessions'),
+        fetch('http://127.0.0.1:18890/api/config'),
+        fetch('http://127.0.0.1:18890/api/sessions'),
       ]);
 
       const [config, sessions] = await Promise.all([
@@ -1045,7 +1045,7 @@ export function createIPCHandlers(
       const config = JSON.parse(configText);
 
       // Import to Gateway
-      const response = await fetch('http://localhost:18890/api/config', {
+      const response = await fetch('http://127.0.0.1:18890/api/config', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(config),

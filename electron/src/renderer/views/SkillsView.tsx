@@ -65,7 +65,7 @@ export function SkillsView() {
   const fetchSkills = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:18890/api/skills');
+      const response = await fetch('http://127.0.0.1:18890/api/skills');
       if (!response.ok) throw new Error('Failed to fetch skills');
       const data = await response.json();
       setSkills(data.skills || []);
@@ -85,7 +85,7 @@ export function SkillsView() {
 
   const toggleSkill = async (name: string, enabled: boolean) => {
     try {
-      const response = await fetch(`http://localhost:18890/api/skills/${name}/${enabled ? 'disable' : 'enable'}`, {
+      const response = await fetch(`http://127.0.0.1:18890/api/skills/${name}/${enabled ? 'disable' : 'enable'}`, {
         method: 'POST'
       });
       if (!response.ok) throw new Error('Failed to toggle skill');
@@ -102,7 +102,7 @@ export function SkillsView() {
         ? selectedRecommend
         : installUrl;
 
-      const response = await fetch('http://localhost:18890/api/skills/install', {
+      const response = await fetch('http://127.0.0.1:18890/api/skills/install', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

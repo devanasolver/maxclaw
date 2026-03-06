@@ -27,7 +27,7 @@ export function ExecutionHistory({ jobId, jobTitle }: ExecutionHistoryProps) {
   const fetchHistory = useCallback(async () => {
     try {
       setLoading(true);
-      const url = new URL('http://localhost:18890/api/cron/history');
+      const url = new URL('http://127.0.0.1:18890/api/cron/history');
       if (jobId) {
         url.searchParams.set('jobId', jobId);
       }
@@ -53,7 +53,7 @@ export function ExecutionHistory({ jobId, jobTitle }: ExecutionHistoryProps) {
 
   const fetchRecordDetail = async (id: string) => {
     try {
-      const response = await fetch(`http://localhost:18890/api/cron/history/${id}`);
+      const response = await fetch(`http://127.0.0.1:18890/api/cron/history/${id}`);
       if (!response.ok) throw new Error('Failed to fetch record detail');
       const data = await response.json();
       setSelectedRecord(data);

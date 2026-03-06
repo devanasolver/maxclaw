@@ -46,7 +46,7 @@ export function MCPView() {
   const fetchServers = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:18890/api/mcp');
+      const response = await fetch('http://127.0.0.1:18890/api/mcp');
       if (!response.ok) throw new Error('Failed to fetch MCP servers');
       const data = await response.json();
       setServers(data.servers || []);
@@ -133,8 +133,8 @@ export function MCPView() {
       }
 
       const url = editingServer
-        ? `http://localhost:18890/api/mcp/${encodeURIComponent(editingServer)}`
-        : 'http://localhost:18890/api/mcp';
+        ? `http://127.0.0.1:18890/api/mcp/${encodeURIComponent(editingServer)}`
+        : 'http://127.0.0.1:18890/api/mcp';
 
       const response = await fetch(url, {
         method: editingServer ? 'PUT' : 'POST',
@@ -159,7 +159,7 @@ export function MCPView() {
     if (!confirm(t('mcp.confirmDelete', { name }))) return;
 
     try {
-      const response = await fetch(`http://localhost:18890/api/mcp/${encodeURIComponent(name)}`, {
+      const response = await fetch(`http://127.0.0.1:18890/api/mcp/${encodeURIComponent(name)}`, {
         method: 'DELETE'
       });
 
@@ -177,7 +177,7 @@ export function MCPView() {
     }));
 
     try {
-      const response = await fetch(`http://localhost:18890/api/mcp/${encodeURIComponent(name)}/test`, {
+      const response = await fetch(`http://127.0.0.1:18890/api/mcp/${encodeURIComponent(name)}/test`, {
         method: 'POST'
       });
 

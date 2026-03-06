@@ -87,7 +87,7 @@ export function SettingsView() {
     }
 
     // Load Gateway config
-    fetch('http://localhost:18890/api/config')
+    fetch('http://127.0.0.1:18890/api/config')
       .then(res => res.json())
       .then(config => {
         setGatewayConfig(config);
@@ -203,7 +203,7 @@ export function SettingsView() {
         },
       };
 
-      const response = await fetch('http://localhost:18890/api/config', {
+      const response = await fetch('http://127.0.0.1:18890/api/config', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ agents: updatedAgents }),
@@ -238,7 +238,7 @@ export function SettingsView() {
         },
       };
 
-      const response = await fetch('http://localhost:18890/api/config', {
+      const response = await fetch('http://127.0.0.1:18890/api/config', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ agents: updatedAgents }),
@@ -341,7 +341,7 @@ export function SettingsView() {
       });
 
       // Update Gateway config. Provider/model changes are hot-applied by /api/config.
-      const response = await fetch('http://localhost:18890/api/config', {
+      const response = await fetch('http://127.0.0.1:18890/api/config', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ providers: gatewayProviders }),
@@ -361,7 +361,7 @@ export function SettingsView() {
   const handleTestConnection = async (provider: ProviderConfig) => {
     try {
       const startTime = Date.now();
-      const response = await fetch('http://localhost:18890/api/providers/test', {
+      const response = await fetch('http://127.0.0.1:18890/api/providers/test', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(provider),
@@ -405,7 +405,7 @@ export function SettingsView() {
       };
     });
 
-    const response = await fetch('http://localhost:18890/api/config', {
+    const response = await fetch('http://127.0.0.1:18890/api/config', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ providers: gatewayProviders }),
@@ -419,7 +419,7 @@ export function SettingsView() {
   const handleChannelsChange = async (newChannels: ChannelsConfig) => {
     setChannels(newChannels);
     try {
-      await fetch('http://localhost:18890/api/config', {
+      await fetch('http://127.0.0.1:18890/api/config', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ channels: newChannels }),
@@ -431,7 +431,7 @@ export function SettingsView() {
 
   const handleTestChannel = async (channel: keyof ChannelsConfig): Promise<{ success: boolean; error?: string }> => {
     try {
-      const response = await fetch(`http://localhost:18890/api/channels/${channel}/test`, {
+      const response = await fetch(`http://127.0.0.1:18890/api/channels/${channel}/test`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(channels[channel]),
@@ -454,7 +454,7 @@ export function SettingsView() {
   const handleTestEmail = async (): Promise<{ success: boolean; latency?: number; error?: string }> => {
     try {
       const startTime = Date.now();
-      const response = await fetch('http://localhost:18890/api/channels/email/test', {
+      const response = await fetch('http://127.0.0.1:18890/api/channels/email/test', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(channels.email),
@@ -1000,9 +1000,9 @@ function AdvancedSettings({ t, language }: { t: (key: string) => string; languag
       setError(null);
       try {
         const [userRes, soulRes, configRes] = await Promise.all([
-          fetch('http://localhost:18890/api/workspace-file/USER.md'),
-          fetch('http://localhost:18890/api/workspace-file/SOUL.md'),
-          fetch('http://localhost:18890/api/config')
+          fetch('http://127.0.0.1:18890/api/workspace-file/USER.md'),
+          fetch('http://127.0.0.1:18890/api/workspace-file/SOUL.md'),
+          fetch('http://127.0.0.1:18890/api/config')
         ]);
         if (userRes.ok) {
           const data = await userRes.json();
@@ -1045,7 +1045,7 @@ function AdvancedSettings({ t, language }: { t: (key: string) => string; languag
           setError('JSON 格式错误: ' + (e instanceof Error ? e.message : 'Invalid JSON'));
           return;
         }
-        const res = await fetch('http://localhost:18890/api/config', {
+        const res = await fetch('http://127.0.0.1:18890/api/config', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(config)
@@ -1055,7 +1055,7 @@ function AdvancedSettings({ t, language }: { t: (key: string) => string; languag
       } else {
         const filename = activeTab === 'USER' ? 'USER.md' : 'SOUL.md';
         const content = activeTab === 'USER' ? userContent : soulContent;
-        const res = await fetch(`http://localhost:18890/api/workspace-file/${filename}`, {
+        const res = await fetch(`http://127.0.0.1:18890/api/workspace-file/${filename}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ content })

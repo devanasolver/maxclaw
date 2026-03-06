@@ -22,7 +22,7 @@ class WebSocketClient {
   private url: string;
   private isConnecting = false;
 
-  constructor(url: string = 'ws://localhost:18890/ws') {
+  constructor(url: string = 'ws://127.0.0.1:18890/ws') {
     this.url = url;
   }
 

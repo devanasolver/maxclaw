@@ -66,7 +66,7 @@ export function ScheduledTasksView() {
       if (showLoading) {
         setLoading(true);
       }
-      const response = await fetch('http://localhost:18890/api/cron');
+      const response = await fetch('http://127.0.0.1:18890/api/cron');
       if (!response.ok) throw new Error(t('scheduled.error.load'));
       const data = await response.json();
       setJobs(data.jobs || []);
@@ -109,8 +109,8 @@ export function ScheduledTasksView() {
       };
 
       const url = editingJob
-        ? `http://localhost:18890/api/cron/${editingJob.id}`
-        : 'http://localhost:18890/api/cron';
+        ? `http://127.0.0.1:18890/api/cron/${editingJob.id}`
+        : 'http://127.0.0.1:18890/api/cron';
       const method = editingJob ? 'PUT' : 'POST';
 
       const response = await fetch(url, {
@@ -168,7 +168,7 @@ export function ScheduledTasksView() {
     try {
       setError(null);
       setSuccess(null);
-      const response = await fetch(`http://localhost:18890/api/cron/${id}/${enabled ? 'disable' : 'enable'}`, {
+      const response = await fetch(`http://127.0.0.1:18890/api/cron/${id}/${enabled ? 'disable' : 'enable'}`, {
         method: 'POST'
       });
       if (!response.ok) throw new Error(t('scheduled.error.toggle'));
@@ -188,7 +188,7 @@ export function ScheduledTasksView() {
       setError(null);
       setSuccess(null);
       setRunningJobId(id);
-      const response = await fetch(`http://localhost:18890/api/cron/${id}/run`, {
+      const response = await fetch(`http://127.0.0.1:18890/api/cron/${id}/run`, {
         method: 'POST'
       });
       if (!response.ok) throw new Error(t('scheduled.error.run'));
@@ -209,7 +209,7 @@ export function ScheduledTasksView() {
     try {
       setError(null);
       setSuccess(null);
-      const response = await fetch(`http://localhost:18890/api/cron/${jobToDelete}`, {
+      const response = await fetch(`http://127.0.0.1:18890/api/cron/${jobToDelete}`, {
         method: 'DELETE'
       });
       if (!response.ok) throw new Error(t('scheduled.error.delete'));

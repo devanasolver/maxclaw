@@ -237,7 +237,7 @@ export function useGateway() {
     setError(null);
 
     try {
-      const response = await fetch('http://localhost:18890/api/message?stream=1', {
+      const response = await fetch('http://127.0.0.1:18890/api/message?stream=1', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -324,26 +324,26 @@ export function useGateway() {
   }, []);
 
   const getSessions = useCallback(async () => {
-    const response = await fetch('http://localhost:18890/api/sessions');
+    const response = await fetch('http://127.0.0.1:18890/api/sessions');
     if (!response.ok) throw new Error('Failed to fetch sessions');
     const data = await response.json() as { sessions?: SessionSummary[] };
     return data.sessions || [];
   }, []);
 
   const getSession = useCallback(async (sessionKey: string) => {
-    const response = await fetch(`http://localhost:18890/api/sessions/${encodeURIComponent(sessionKey)}`);
+    const response = await fetch(`http://127.0.0.1:18890/api/sessions/${encodeURIComponent(sessionKey)}`);
     if (!response.ok) throw new Error('Failed to fetch session');
     return response.json() as Promise<SessionDetail>;
   }, []);
 
   const getConfig = useCallback(async () => {
-    const response = await fetch('http://localhost:18890/api/config');
+    const response = await fetch('http://127.0.0.1:18890/api/config');
     if (!response.ok) throw new Error('Failed to fetch config');
     return response.json();
   }, []);
 
   const getSkills = useCallback(async () => {
-    const response = await fetch('http://localhost:18890/api/skills');
+    const response = await fetch('http://127.0.0.1:18890/api/skills');
     if (!response.ok) throw new Error('Failed to fetch skills');
     const data = await response.json() as { skills?: SkillSummary[] };
     return data.skills || [];
@@ -417,7 +417,7 @@ export function useGateway() {
       return getConfig();
     }
 
-    const response = await fetch('http://localhost:18890/api/config', {
+    const response = await fetch('http://127.0.0.1:18890/api/config', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
@@ -427,7 +427,7 @@ export function useGateway() {
   }, [getConfig]);
 
   const deleteSession = useCallback(async (sessionKey: string) => {
-    const response = await fetch(`http://localhost:18890/api/sessions/${encodeURIComponent(sessionKey)}`, {
+    const response = await fetch(`http://127.0.0.1:18890/api/sessions/${encodeURIComponent(sessionKey)}`, {
       method: 'DELETE'
     });
     if (!response.ok) throw new Error('Failed to delete session');
@@ -435,7 +435,7 @@ export function useGateway() {
   }, []);
 
   const renameSession = useCallback(async (sessionKey: string, newTitle: string) => {
-    const response = await fetch(`http://localhost:18890/api/sessions/${encodeURIComponent(sessionKey)}/rename`, {
+    const response = await fetch(`http://127.0.0.1:18890/api/sessions/${encodeURIComponent(sessionKey)}/rename`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ title: newTitle })
@@ -445,7 +445,7 @@ export function useGateway() {
   }, []);
 
   const getWhatsAppStatus = useCallback(async () => {
-    const response = await fetch('http://localhost:18890/api/channels/whatsapp/status');
+    const response = await fetch('http://127.0.0.1:18890/api/channels/whatsapp/status');
     if (!response.ok) throw new Error('Failed to fetch WhatsApp status');
     return response.json() as Promise<{
       enabled: boolean;
@@ -460,7 +460,7 @@ export function useGateway() {
     sessionKey: string,
     params: Record<string, unknown>
   ) => {
-    const response = await fetch('http://localhost:18890/api/browser/action', {
+    const response = await fetch('http://127.0.0.1:18890/api/browser/action', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
