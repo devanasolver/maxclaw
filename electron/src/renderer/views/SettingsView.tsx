@@ -110,8 +110,8 @@ export function SettingsView() {
                 type: key === 'anthropic' ? 'anthropic' : 'openai',
                 apiKey: value.apiKey || '',
                 baseURL: value.apiBase || '',
-                apiFormat: key === 'anthropic' ? 'anthropic' : 'openai',
-                models: [],
+                apiFormat: value.apiFormat || (key === 'anthropic' ? 'anthropic' : 'openai'),
+                models: Array.isArray(value.models) ? value.models : [],
                 enabled: true,
               });
             }
@@ -322,12 +322,21 @@ export function SettingsView() {
       }
 
       // Convert to gateway config format
-      const gatewayProviders: Record<string, { apiKey: string; apiBase?: string }> = {};
+      const gatewayProviders: Record<string, { apiKey: string; apiBase?: string; apiFormat?: string; models?: Array<{ id: string; name?: string; enabled: boolean; maxTokens?: number }> }> = {};
       newProviders.forEach((p) => {
         const key = p.name.toLowerCase().replace(/\s+/g, '');
         gatewayProviders[key] = {
           apiKey: p.apiKey,
           apiBase: p.baseURL,
+          apiFormat: p.apiFormat,
+          models: p.models
+            .map((model) => ({
+              id: model.id.trim(),
+              name: model.name.trim(),
+              enabled: model.enabled !== false,
+              maxTokens: model.maxTokens,
+            }))
+            .filter((model) => model.id),
         };
       });
 

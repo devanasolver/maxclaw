@@ -9,8 +9,17 @@ import (
 
 // ProviderConfig  LLM 提供商配置
 type ProviderConfig struct {
-	APIKey  string `json:"apiKey" mapstructure:"apiKey"`
-	APIBase string `json:"apiBase,omitempty" mapstructure:"apiBase"`
+	APIKey    string                `json:"apiKey" mapstructure:"apiKey"`
+	APIBase   string                `json:"apiBase,omitempty" mapstructure:"apiBase"`
+	APIFormat string                `json:"apiFormat,omitempty" mapstructure:"apiFormat"`
+	Models    []ProviderModelConfig `json:"models,omitempty" mapstructure:"models"`
+}
+
+type ProviderModelConfig struct {
+	ID        string `json:"id" mapstructure:"id"`
+	Name      string `json:"name,omitempty" mapstructure:"name"`
+	MaxTokens int    `json:"maxTokens,omitempty" mapstructure:"maxTokens"`
+	Enabled   bool   `json:"enabled" mapstructure:"enabled"`
 }
 
 // ChannelsConfig 聊天频道配置

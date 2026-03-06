@@ -4,8 +4,8 @@
 
 ### Fixed
 
-- **聊天模型默认值同步修复**：DeepSeek 在聊天窗默认候选收敛为 `deepseek-chat`，聊天窗选中的默认模型现在优先跟随后端配置 `agents.defaults.model`，避免与设置页和运行时模型脱节
-  - `electron/src/renderer/hooks/useGateway.ts`、`electron/src/renderer/views/ChatView.tsx`
+- **聊天模型默认值与来源同步修复**：DeepSeek 在聊天窗默认候选收敛为 `deepseek-chat`；聊天窗默认模型现在优先跟随后端配置 `agents.defaults.model`；同时 provider 配置中的 `models` 列表会持久化到 config 并优先作为聊天窗候选来源，避免与设置页脱节
+  - `electron/src/renderer/hooks/useGateway.ts`、`electron/src/renderer/views/ChatView.tsx`、`electron/src/renderer/views/SettingsView.tsx`、`internal/config/schema.go`
   - 验证：`cd electron && npm run build && make build`
 
 - **GLM-4.7 流式回复重复修复**：修复部分模型返回累计式 `delta` 时，前端将其误当作纯增量追加，导致同一条回复在聊天窗口中重复显示的问题

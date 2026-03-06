@@ -80,6 +80,13 @@ interface GatewayConfigResponse {
     {
       apiKey?: string;
       apiBase?: string;
+      apiFormat?: string;
+      models?: Array<{
+        id: string;
+        name?: string;
+        enabled?: boolean;
+        maxTokens?: number;
+      }>;
     }
   >;
 }
@@ -365,8 +372,18 @@ export function useGateway() {
     };
 
     for (const providerKey of configuredProviderKeys) {
-      const candidates = PROVIDER_DEFAULT_MODELS[providerKey] || [];
-      for (const modelId of candidates) {
+      const configuredModels = (providers[providerKey]?.models || []).filter(
+        (model) => model && model.id && model.enabled !== false
+      );
+      if (configuredModels.length > 0) {
+        for (const model of configuredModels) {
+          addModel(model.id, providerKey);
+        }
+        continue;
+      }
+
+      const fallbackCandidates = PROVIDER_DEFAULT_MODELS[providerKey] || [];
+      for (const modelId of fallbackCandidates) {
         addModel(modelId, providerKey);
       }
     }
