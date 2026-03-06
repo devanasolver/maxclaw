@@ -4,6 +4,10 @@
 
 ### Fixed
 
+- **Provider 配置改为热更新**：保存模型 provider 配置时不再强制重启 Gateway，改为直接通过 `/api/config` 热应用运行时 provider；同时修复删除 provider 时误丢失其余 provider `models/apiFormat` 配置的问题
+  - `electron/src/renderer/views/SettingsView.tsx`
+  - 验证：`cd electron && npm run build && make build`
+
 - **聊天模型默认值与来源同步修复**：DeepSeek 在聊天窗默认候选收敛为 `deepseek-chat`；聊天窗默认模型现在优先跟随后端配置 `agents.defaults.model`；同时 provider 配置中的 `models` 列表会持久化到 config 并优先作为聊天窗候选来源，避免与设置页脱节
   - `electron/src/renderer/hooks/useGateway.ts`、`electron/src/renderer/views/ChatView.tsx`、`electron/src/renderer/views/SettingsView.tsx`、`internal/config/schema.go`
   - 验证：`cd electron && npm run build && make build`

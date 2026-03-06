@@ -340,7 +340,7 @@ export function SettingsView() {
         };
       });
 
-      // Update Gateway config
+      // Update Gateway config. Provider/model changes are hot-applied by /api/config.
       const response = await fetch('http://localhost:18890/api/config', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -350,11 +350,8 @@ export function SettingsView() {
       if (response.ok) {
         setProviders(newProviders);
         setEditingProvider(null);
-
-        // Restart Gateway to apply changes
-        await fetch('http://localhost:18890/api/gateway/restart', {
-          method: 'POST',
-        });
+      } else {
+        throw new Error(`save failed: ${response.status}`);
       }
     } catch (error) {
       console.error('Failed to save provider:', error);
@@ -390,20 +387,32 @@ export function SettingsView() {
     setProviders(newProviders);
 
     // Update Gateway config
-    const gatewayProviders: Record<string, { apiKey: string; apiBase?: string }> = {};
+    const gatewayProviders: Record<string, { apiKey: string; apiBase?: string; apiFormat?: string; models?: Array<{ id: string; name?: string; enabled: boolean; maxTokens?: number }> }> = {};
     newProviders.forEach((p) => {
       const key = p.name.toLowerCase().replace(/\s+/g, '');
       gatewayProviders[key] = {
         apiKey: p.apiKey,
         apiBase: p.baseURL,
+        apiFormat: p.apiFormat,
+        models: p.models
+          .map((model) => ({
+            id: model.id.trim(),
+            name: model.name.trim(),
+            enabled: model.enabled !== false,
+            maxTokens: model.maxTokens,
+          }))
+          .filter((model) => model.id),
       };
     });
 
-    await fetch('http://localhost:18890/api/config', {
+    const response = await fetch('http://localhost:18890/api/config', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ providers: gatewayProviders }),
     });
+    if (!response.ok) {
+      throw new Error(`delete provider save failed: ${response.status}`);
+    }
   };
 
   // Channel config handlers
