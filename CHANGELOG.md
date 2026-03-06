@@ -20,6 +20,10 @@
   - `electron/src/renderer/components/CronBuilder.tsx`、`electron/src/renderer/components/CronBuilder.css`、`electron/src/renderer/views/ScheduledTasksView.tsx`、`electron/src/renderer/i18n/index.ts`
   - 验证：`cd electron && npm run build && make build`
 
+- **WhatsApp 二维码不显示修复**：允许 Electron 渲染 `data:` 图片源，修复 WhatsApp 绑定页二维码被 CSP 拦截导致的破图问题
+  - `electron/index.html`
+  - 验证：`cd electron && npm run build && make build`
+
 ### Added
 
 #### UI/UX 增强四合一功能
