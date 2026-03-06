@@ -36,6 +36,10 @@
   - `electron/src/renderer/views/MCPView.tsx`、`electron/src/renderer/views/SkillsView.tsx`
   - 验证：`cd electron && npm run build && make build`
 
+- **MCP / Skills 头部拖拽区域修正**：恢复标题栏空白区的窗口拖动能力，仅将右侧按钮区域设为 `no-drag`
+  - `electron/src/renderer/views/MCPView.tsx`、`electron/src/renderer/views/SkillsView.tsx`
+  - 验证：`cd electron && npm run build && make build`
+
 - **Scheduled Tasks 立即执行反馈**：点击 `Run Now` 后增加执行中状态和成功提示，避免用户无法判断任务是否已触发
   - `electron/src/renderer/views/ScheduledTasksView.tsx`、`electron/src/renderer/i18n/index.ts`
   - 验证：`cd electron && npm run build && make build`
