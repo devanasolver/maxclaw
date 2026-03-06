@@ -64,6 +64,10 @@
   - `electron/assets/icon.png`、`electron/assets/icon.icns`、`electron/assets/icon.ico`、`electron/public/icon.png`、`icon.png`
   - 验证：`cd electron && npm run build && make build`
 
+- **应用图标透明外圈修正**：移除图标外层实底背景，恢复透明边缘，避免在系统 UI 中出现方形底色
+  - `electron/assets/icon.png`、`electron/assets/icon.icns`、`electron/assets/icon.ico`、`electron/public/icon.png`、`icon.png`
+  - 验证：`cd electron && npm run build && make build`
+
 ### Added
 
 #### UI/UX 增强四合一功能
