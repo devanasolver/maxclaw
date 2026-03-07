@@ -273,11 +273,11 @@ export function ChatView() {
         description: '新建会话',
         action: () => {
           const newSessionKey = `desktop:${Date.now()}`;
+          resetStreamingState(currentSessionKey);
           dispatch(setCurrentSessionKey(newSessionKey));
           setMessages([]);
           setSessionTitle('New thread');
           setPreviewSidebarCollapsed(true);
-          resetTypingState();
         }
       },
       {
@@ -287,7 +287,7 @@ export function ChatView() {
         action: () => {
           setMessages([]);
           setPreviewSidebarCollapsed(true);
-          resetTypingState();
+          resetStreamingState(currentSessionKey);
         }
       },
       {
@@ -313,7 +313,7 @@ export function ChatView() {
         }
       }
     ],
-    [dispatch]
+    [dispatch, currentSessionKey]
   );
 
   const filteredSlashCommands = useMemo(() => {

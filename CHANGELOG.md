@@ -4,6 +4,10 @@
 
 ### Fixed
 
+- **聊天视图初始化崩溃修复**：修复 `ChatView` 在重构后仍引用已移除的流式清理函数，导致新包运行时报 `Cannot access ... before initialization` 的问题
+  - `electron/src/renderer/views/ChatView.tsx`
+  - 验证：`cd electron && npm run build && make build`
+
 - **Bugfix 文档补充**：新增“运行中会话切换后流式详情丢失”复盘，并同步更新 BUGFIX 索引
   - `BUGFIX.md`
   - 验证：`make build`
