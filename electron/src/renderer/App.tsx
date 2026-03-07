@@ -103,7 +103,7 @@ function App() {
 
   return (
     <div className="h-screen overflow-hidden bg-background px-3 py-3 text-foreground md:px-5 md:py-5">
-      <div className="relative flex h-full overflow-hidden rounded-[30px] border border-white/55 bg-white/52 shadow-[0_30px_80px_rgba(44,60,94,0.18)] backdrop-blur-2xl">
+      <div className="relative flex h-full gap-3 overflow-hidden rounded-[30px] border border-white/55 bg-white/52 shadow-[0_30px_80px_rgba(44,60,94,0.18)] backdrop-blur-2xl">
         <div className={`absolute z-10 draggable ${isMac ? 'h-14' : 'h-12'}`} style={dragStripStyle} />
         <div className="absolute z-40 flex items-center gap-2 no-drag" style={controlAnchorStyle}>
           <button
@@ -143,7 +143,7 @@ function App() {
           </div>
         )}
         <Sidebar />
-        <main className="flex-1 overflow-hidden rounded-r-[30px] bg-transparent">
+        <main className="mr-2 flex-1 overflow-hidden rounded-[28px] bg-transparent">
           {activeTab === 'chat' && <ChatView />}
           {activeTab === 'sessions' && <SessionsView />}
           {activeTab === 'scheduled' && <ScheduledTasksView />}

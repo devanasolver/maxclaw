@@ -4,6 +4,10 @@
 
 ### Fixed
 
+- **聊天左右栏间距修正**：为侧栏与主内容区增加明确的卡片间缝隙，避免主内容背景视觉上叠到左侧栏下方
+  - `electron/src/renderer/App.tsx`
+  - 验证：`cd electron && npm run build && make build`
+
 - **聊天主界面中间底板移除**：去掉侧栏与主内容区之间多余的共享背景卡片层，避免界面出现一层没有必要的灰白中间底板
   - `electron/src/renderer/App.tsx`
   - 验证：`cd electron && npm run build && make build`
