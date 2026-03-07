@@ -4,6 +4,10 @@
 
 ### Fixed
 
+- **应用图标全量替换**：将桌面应用、托盘和前端界面共用的图标资源统一替换为新的螃蟹主视觉，并重新生成 `png/icns/ico` 多平台图标文件
+  - `icon.png`、`electron/assets/icon.png`、`electron/assets/icon.icns`、`electron/assets/icon.ico`、`electron/assets/tray-icon.png`、`electron/assets/tray-icon@2x.png`、`electron/public/icon.png`
+  - 验证：`cd electron && npm run build && make build`
+
 - **聊天 Thinking 图标优化**：将时间线中的 thinking 状态图标调整为更轻量的原子轨道样式，弱化厚重轮廓并增强“思考中”的语义表达
   - `electron/src/renderer/views/ChatView.tsx`
   - 验证：`cd electron && npm run build && make build`
