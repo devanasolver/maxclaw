@@ -4,6 +4,10 @@
 
 ### Fixed
 
+- **应用图标资源与派生格式同步**：以仓库根目录 `icon.png` 作为唯一源，重新生成并覆盖 Electron 应用图标、托盘图标和前端公共图标资源，确保各入口显示一致
+  - `icon.png`、`electron/assets/icon.png`、`electron/assets/icon.icns`、`electron/assets/icon.ico`、`electron/assets/tray-icon.png`、`electron/assets/tray-icon@2x.png`、`electron/public/icon.png`
+  - 验证：`cd electron && npm run build && make build`
+
 - **应用图标全量替换**：将桌面应用、托盘和前端界面共用的图标资源统一替换为新的螃蟹主视觉，并重新生成 `png/icns/ico` 多平台图标文件
   - `icon.png`、`electron/assets/icon.png`、`electron/assets/icon.icns`、`electron/assets/icon.ico`、`electron/assets/tray-icon.png`、`electron/assets/tray-icon@2x.png`、`electron/public/icon.png`
   - 验证：`cd electron && npm run build && make build`
