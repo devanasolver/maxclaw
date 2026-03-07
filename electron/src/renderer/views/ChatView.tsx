@@ -1977,11 +1977,11 @@ export function ChatView() {
           <div className="flex-1 overflow-y-auto px-8 py-10">
             <div className="mx-auto max-w-4xl">
               <div className="mb-8 text-center">
-                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-secondary p-1 shadow-md">
+                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center">
                   <img
                     src="./icon.png"
                     alt="maxclaw"
-                    className="h-full w-full rounded-xl object-cover"
+                    className="h-full w-full object-contain"
                   />
                 </div>
                 <h1 className="text-4xl font-semibold text-foreground">{t('chat.starter.title')}</h1>

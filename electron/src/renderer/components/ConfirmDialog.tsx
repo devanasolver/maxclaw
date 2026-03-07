@@ -35,11 +35,11 @@ export function ConfirmDialog({
       <div className="relative w-full max-w-sm rounded-2xl bg-card p-6 shadow-2xl">
         {/* App Icon */}
         <div className="mb-4 flex justify-center">
-          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-secondary p-2">
+          <div className="flex h-16 w-16 items-center justify-center">
             <img
               src="./icon.png"
               alt="maxclaw"
-              className="h-full w-full rounded-xl object-cover"
+              className="h-full w-full object-contain"
             />
           </div>
         </div>

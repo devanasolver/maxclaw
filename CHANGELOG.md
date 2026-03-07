@@ -4,6 +4,10 @@
 
 ### Fixed
 
+- **启动页图标展示修正**：聊天启动页和确认弹窗中的应用图标改为直接显示透明 PNG，不再额外套白底圆角卡片，避免出现重复的 icon 容器视觉
+  - `electron/src/renderer/views/ChatView.tsx`、`electron/src/renderer/components/ConfirmDialog.tsx`
+  - 验证：`cd electron && npm run build && make build`
+
 - **macOS Dock 图标圆角修复**：保留仓库根目录 `icon.png` 作为源图，但给应用图标派生资源增加圆角透明遮罩，修复 Dock 中显示为白底直角方块的问题
   - `electron/assets/icon.png`、`electron/assets/icon.icns`、`electron/assets/icon.ico`、`electron/assets/tray-icon.png`、`electron/assets/tray-icon@2x.png`、`electron/public/icon.png`
   - 验证：`cd electron && npm run build && make build`
