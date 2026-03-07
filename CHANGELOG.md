@@ -4,6 +4,10 @@
 
 ### Fixed
 
+- **macOS Dock 图标圆角修复**：保留仓库根目录 `icon.png` 作为源图，但给应用图标派生资源增加圆角透明遮罩，修复 Dock 中显示为白底直角方块的问题
+  - `electron/assets/icon.png`、`electron/assets/icon.icns`、`electron/assets/icon.ico`、`electron/assets/tray-icon.png`、`electron/assets/tray-icon@2x.png`、`electron/public/icon.png`
+  - 验证：`cd electron && npm run build && make build`
+
 - **应用图标资源与派生格式同步**：以仓库根目录 `icon.png` 作为唯一源，重新生成并覆盖 Electron 应用图标、托盘图标和前端公共图标资源，确保各入口显示一致
   - `icon.png`、`electron/assets/icon.png`、`electron/assets/icon.icns`、`electron/assets/icon.ico`、`electron/assets/tray-icon.png`、`electron/assets/tray-icon@2x.png`、`electron/public/icon.png`
   - 验证：`cd electron && npm run build && make build`
