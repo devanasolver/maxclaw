@@ -238,6 +238,22 @@ export function ScheduledTasksView() {
     return t('scheduled.executionMode.ask.short');
   };
 
+  const getDraftScheduleLabel = () => {
+    if (formData.scheduleType === 'every') {
+      return t('scheduled.schedule.every').replace('{value}', formData.scheduleValue || t('scheduled.intervalMs.placeholder'));
+    }
+    if (formData.scheduleType === 'once') {
+      return t('scheduled.schedule.once').replace('{value}', formData.scheduleValue || t('scheduled.execTime.placeholder'));
+    }
+    return t('scheduled.schedule.cron').replace('{value}', formData.scheduleValue || '0 9 * * *');
+  };
+
+  const getScheduleTypeHint = () => {
+    if (formData.scheduleType === 'every') return t('scheduled.form.summary.tip.every');
+    if (formData.scheduleType === 'once') return t('scheduled.form.summary.tip.once');
+    return t('scheduled.form.summary.tip.cron');
+  };
+
   return (
     <div className="h-full overflow-y-auto bg-background p-6">
       <div className="mx-auto max-w-4xl">
@@ -311,30 +327,73 @@ export function ScheduledTasksView() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="mb-1.5 block text-sm font-medium text-foreground">{t('scheduled.scheduleType')}</label>
-                  <CustomSelect
-                    value={formData.scheduleType}
-                    onChange={(value) => {
-                      const type = value as JobFormData['scheduleType'];
-                      setFormData({
-                        ...formData,
-                        scheduleType: type,
-                        scheduleValue: type === 'cron' ? '0 9 * * *' : type === 'every' ? '3600000' : ''
-                      });
-                    }}
-                    options={[
-                      { value: 'cron', label: t('scheduled.type.cron') },
-                      { value: 'every', label: t('scheduled.type.every') },
-                      { value: 'once', label: t('scheduled.type.once') }
-                    ]}
-                    size="md"
-                  />
+              <div className="grid gap-4 xl:grid-cols-[300px_minmax(0,1fr)]">
+                <div className="space-y-4">
+                  <div className="rounded-2xl border border-border/80 bg-secondary/25 p-4 shadow-[0_1px_0_rgba(255,255,255,0.65)_inset]">
+                    <label className="mb-1.5 block text-sm font-medium text-foreground">{t('scheduled.scheduleType')}</label>
+                    <CustomSelect
+                      value={formData.scheduleType}
+                      onChange={(value) => {
+                        const type = value as JobFormData['scheduleType'];
+                        setFormData({
+                          ...formData,
+                          scheduleType: type,
+                          scheduleValue: type === 'cron' ? '0 9 * * *' : type === 'every' ? '3600000' : ''
+                        });
+                      }}
+                      options={[
+                        { value: 'cron', label: t('scheduled.type.cron') },
+                        { value: 'every', label: t('scheduled.type.every') },
+                        { value: 'once', label: t('scheduled.type.once') }
+                      ]}
+                      size="md"
+                    />
+                  </div>
+
+                  <div className="rounded-2xl border border-border/80 bg-gradient-to-br from-secondary/35 via-background to-secondary/20 p-4 shadow-[0_1px_0_rgba(255,255,255,0.7)_inset]">
+                    <div className="mb-3">
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-foreground/40">
+                        {t('scheduled.form.summary.eyebrow')}
+                      </p>
+                      <h4 className="mt-2 text-sm font-semibold text-foreground">{t('scheduled.form.summary.title')}</h4>
+                      <p className="mt-1 text-xs leading-5 text-foreground/55">{getScheduleTypeHint()}</p>
+                    </div>
+
+                    <div className="space-y-3">
+                      <div className="rounded-xl border border-border/70 bg-background/80 px-3 py-2.5">
+                        <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-foreground/35">
+                          {t('scheduled.form.summary.schedule')}
+                        </p>
+                        <p className="mt-1 text-sm font-medium text-foreground">{getDraftScheduleLabel()}</p>
+                      </div>
+
+                      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
+                        <div className="rounded-xl border border-border/70 bg-background/75 px-3 py-2.5">
+                          <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-foreground/35">
+                            {t('scheduled.form.summary.mode')}
+                          </p>
+                          <p className="mt-1 text-sm font-medium text-foreground">
+                            {getExecutionModeLabel(formData.executionMode)}
+                          </p>
+                        </div>
+                        <div className="rounded-xl border border-border/70 bg-background/75 px-3 py-2.5">
+                          <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-foreground/35">
+                            {t('scheduled.form.summary.channels')}
+                          </p>
+                          <p className="mt-1 text-sm font-medium text-foreground">
+                            {formData.channels.map((channel) => {
+                              const match = channelOptions.find((option) => option.value === channel);
+                              return match ? match.label : channel;
+                            }).join(', ')}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 {formData.scheduleType === 'cron' ? (
-                  <div className="form-group">
+                  <div className="form-group min-w-0">
                     <label className="mb-1.5 block text-sm font-medium text-foreground">{t('scheduled.cronExpression')}</label>
                     <CronBuilder
                       value={formData.scheduleValue}
@@ -342,7 +401,7 @@ export function ScheduledTasksView() {
                     />
                   </div>
                 ) : (
-                  <div>
+                  <div className="rounded-2xl border border-border/80 bg-secondary/20 p-4 shadow-[0_1px_0_rgba(255,255,255,0.65)_inset]">
                     <label className="mb-1.5 block text-sm font-medium text-foreground">
                       {formData.scheduleType === 'every' ? t('scheduled.intervalMs') : t('scheduled.execTime')}
                     </label>
@@ -350,10 +409,11 @@ export function ScheduledTasksView() {
                       type="text"
                       value={formData.scheduleValue}
                       onChange={(e) => setFormData({ ...formData, scheduleValue: e.target.value })}
-                  placeholder={formData.scheduleType === 'every' ? t('scheduled.intervalMs.placeholder') : t('scheduled.execTime.placeholder')}
+                      placeholder={formData.scheduleType === 'every' ? t('scheduled.intervalMs.placeholder') : t('scheduled.execTime.placeholder')}
                       className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-foreground/40 focus:border-primary/40 focus:outline-none"
                       required
                     />
+                    <p className="mt-3 text-xs leading-5 text-foreground/50">{getScheduleTypeHint()}</p>
                   </div>
                 )}
               </div>
