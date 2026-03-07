@@ -4,6 +4,10 @@
 
 ### Fixed
 
+- **技能市场页侧栏联动闪烁修复**：为 `SkillsView` 建立独立合成层，并移除技能描述浮层的 `backdrop-blur`，避免技能卡片网格与左侧栏共享大面积重绘区域，导致悬停侧栏时仅在技能市场页出现发白闪烁
+  - `electron/src/renderer/views/SkillsView.tsx`
+  - 验证：`cd electron && npm run build && make build && cd electron && npm run start`
+
 - **侧栏合成层闪烁修复**：为左侧栏建立稳定独立渲染层，去掉侧栏自身的 `backdrop-blur` 与 `sticky` footer，并增加 `contain/translateZ` 隔离，降低在 `Skills / MCP` 页面旁路重绘导致的整栏发白闪烁
   - `electron/src/renderer/components/Sidebar.tsx`
   - 验证：`cd electron && npm run build && make build && cd electron && npm run start`

@@ -166,8 +166,8 @@ export function SkillsView() {
   });
 
   return (
-    <div className="h-full overflow-y-auto bg-background p-6">
-      <div className="mx-auto max-w-5xl">
+    <div className="relative isolate h-full overflow-y-auto bg-background p-6 [backface-visibility:hidden] [contain:paint] [transform:translateZ(0)]">
+      <div className="mx-auto max-w-5xl [transform:translateZ(0)]">
         <div className="relative z-20 mb-6 flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-foreground">{t('skills.title')}</h1>
@@ -403,9 +403,9 @@ export function SkillsView() {
                 </div>
 
                 {skill.description && (
-                  <div className="group relative mt-3">
+                  <div className="group relative mt-3 [transform:translateZ(0)]">
                     <p className="cursor-help text-sm text-foreground/70 line-clamp-2">{skill.description}</p>
-                    <div className="pointer-events-none absolute left-0 top-full z-30 mt-2 w-full min-w-[16rem] translate-y-1 rounded-xl border border-border/80 bg-card/95 p-3 text-xs leading-5 text-foreground shadow-[0_14px_34px_rgba(15,23,42,0.18)] opacity-0 backdrop-blur-sm transition-all duration-200 group-hover:translate-y-0 group-hover:opacity-100">
+                    <div className="pointer-events-none absolute left-0 top-full z-30 mt-2 w-full min-w-[16rem] translate-y-1 rounded-xl border border-border/80 bg-card p-3 text-xs leading-5 text-foreground shadow-[0_14px_34px_rgba(15,23,42,0.18)] opacity-0 transition-all duration-200 group-hover:translate-y-0 group-hover:opacity-100">
                       {skill.description}
                     </div>
                   </div>
