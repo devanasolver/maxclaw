@@ -418,10 +418,10 @@ func (c *Config) GetAPIBase(model string) string {
 		}
 		matchedProvider = true
 		if cfg, ok := providerMap[spec.Name]; ok && cfg.APIBase != "" {
-			return cfg.APIBase
+			return normalizeProviderAPIBase(spec.Name, model, cfg.APIBase)
 		}
 		if spec.DefaultAPIBase != "" {
-			return spec.DefaultAPIBase
+			return normalizeProviderAPIBase(spec.Name, model, spec.DefaultAPIBase)
 		}
 	}
 
@@ -435,6 +435,34 @@ func (c *Config) GetAPIBase(model string) string {
 	}
 
 	return ""
+}
+
+func normalizeProviderAPIBase(providerName, model, apiBase string) string {
+	if providerName != "zhipu" {
+		return apiBase
+	}
+
+	normalizedModel := strings.ToLower(strings.TrimSpace(model))
+	normalizedBase := strings.TrimRight(strings.TrimSpace(apiBase), "/")
+	if normalizedBase == "" {
+		return apiBase
+	}
+
+	if zhipuVisionModel(normalizedModel) {
+		if strings.HasSuffix(normalizedBase, "/api/coding/paas/v4") {
+			return strings.TrimSuffix(normalizedBase, "/api/coding/paas/v4") + "/api/paas/v4"
+		}
+	}
+
+	return apiBase
+}
+
+func zhipuVisionModel(model string) bool {
+	model = strings.ToLower(strings.TrimSpace(model))
+	return strings.Contains(model, "glm-4.6v") ||
+		strings.Contains(model, "glm-ocr") ||
+		strings.Contains(model, "vision") ||
+		strings.Contains(model, "vl")
 }
 
 func (c *Config) providerConfigMap() map[string]ProviderConfig {

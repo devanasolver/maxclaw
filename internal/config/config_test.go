@@ -102,6 +102,8 @@ func TestGetAPIBase(t *testing.T) {
 		{"minimax/another-model", "https://api.minimaxi.com/v1"},
 		{"glm-4.5", "https://open.bigmodel.cn/api/coding/paas/v4"},
 		{"zai/glm-5", "https://open.bigmodel.cn/api/coding/paas/v4"},
+		{"glm-4.6v", "https://open.bigmodel.cn/api/paas/v4"},
+		{"glm-ocr", "https://open.bigmodel.cn/api/paas/v4"},
 		{"anthropic/claude", ""},
 	}
 
@@ -141,6 +143,12 @@ func TestGetAPIBaseZhipuDefault(t *testing.T) {
 	cfg := DefaultConfig()
 	got := cfg.GetAPIBase("glm-4.5")
 	assert.Equal(t, "https://open.bigmodel.cn/api/coding/paas/v4", got)
+}
+
+func TestGetAPIBaseZhipuVisionDefault(t *testing.T) {
+	cfg := DefaultConfig()
+	got := cfg.GetAPIBase("glm-4.6v")
+	assert.Equal(t, "https://open.bigmodel.cn/api/paas/v4", got)
 }
 
 func TestWorkspacePath(t *testing.T) {

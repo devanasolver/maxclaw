@@ -28,6 +28,10 @@
   - `internal/providers/capabilities.go`、`internal/providers/openai_test.go`、`electron/src/renderer/types/providers.ts`
   - 验证：`go test ./internal/providers`、`cd electron && npm run build`、`make build`
 
+- **智谱视觉模型自动切换通用端点**：`glm-4.6v / glm-ocr` 在 `zhipu` provider 下不再沿用 `coding/paas/v4`，而是自动改走官方通用 `paas/v4` 端点，避免视觉模型错误落到 Coding 专属接口
+  - `internal/config/schema.go`、`internal/config/config_test.go`
+  - 验证：`go test ./internal/config`、`make build`
+
 - **入站图片媒体管线落地**：新增通用 `internal/media` 管线，QQ/Telegram 入站图片会先解析并缓存到本地，再由 Provider 按模型能力编码；视觉模型优先使用本地缓存图片生成 `data:` URL，非视觉模型保留文本降级，纯图片消息不再触发重工具链绕路下载/OCR
   - `ARCHITECTURE.md`、`internal/bus/events.go`、`internal/media/manager.go`、`internal/media/manager_test.go`、`internal/channels/telegram.go`、`internal/channels/qq.go`、`internal/channels/telegram_media_test.go`、`internal/agent/context.go`、`internal/agent/context_test.go`、`internal/agent/loop.go`、`internal/agent/loop_test.go`、`internal/providers/base.go`、`internal/providers/capabilities.go`、`internal/providers/openai.go`、`internal/providers/openai_test.go`、`internal/cli/gateway.go`
   - 验证：`go test ./internal/media ./internal/providers ./internal/agent ./internal/channels ./internal/cli`、`make build`
