@@ -216,6 +216,7 @@ var gatewayCmd = &cobra.Command{
 			})
 			qqChannel.SetMessageHandler(func(msg *channels.Message) {
 				inboundMsg := bus.NewInboundMessage("qq", msg.Sender, msg.ChatID, msg.Text)
+				inboundMsg.Media = msg.Media
 				messageBus.PublishInbound(inboundMsg)
 			})
 			channelRegistry.Register(qqChannel)
@@ -444,33 +445,34 @@ func handleOutboundMessages(ctx context.Context, bus *bus.MessageBus, registry *
 
 // sendMessageWithMedia 发送带附件的消息
 func sendMessageWithMedia(ch channels.Channel, msg *bus.OutboundMessage) error {
-	// 类型断言，检查是否支持文件发送
-	switch c := ch.(type) {
-	case interface {
+	type photoSender interface {
 		SendPhoto(chatID string, photoPath string, caption string) error
+	}
+	type documentSender interface {
 		SendDocument(chatID string, docPath string, caption string) error
-	}:
-		// Telegram 频道支持文件发送
-		media := msg.Media
-		if media.URL == "" {
-			return fmt.Errorf("media URL is empty")
-		}
+	}
 
-		// 根据类型调用相应的方法
-		switch media.Type {
-		case "image", "photo":
+	media := msg.Media
+	if media == nil || media.URL == "" {
+		return fmt.Errorf("media URL is empty")
+	}
+
+	switch media.Type {
+	case "image", "photo":
+		if c, ok := ch.(photoSender); ok {
 			return c.SendPhoto(msg.ChatID, media.URL, msg.Content)
-		case "document", "file":
+		}
+	case "document", "file":
+		if c, ok := ch.(documentSender); ok {
 			return c.SendDocument(msg.ChatID, media.URL, msg.Content)
-		default:
-			return fmt.Errorf("unsupported media type: %s", media.Type)
 		}
 	default:
-		// 频道不支持文件发送，回退到文本消息
-		content := msg.Content
-		if msg.Media != nil && msg.Media.URL != "" {
-			content = fmt.Sprintf("%s\n[附件: %s]", content, msg.Media.URL)
-		}
-		return ch.SendMessage(msg.ChatID, content)
+		return fmt.Errorf("unsupported media type: %s", media.Type)
 	}
+
+	content := msg.Content
+	if media.URL != "" {
+		content = fmt.Sprintf("%s\n[附件: %s]", content, media.URL)
+	}
+	return ch.SendMessage(msg.ChatID, content)
 }

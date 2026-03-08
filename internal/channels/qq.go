@@ -3,14 +3,17 @@ package channels
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/Lichas/maxclaw/internal/bus"
 	"github.com/gorilla/websocket"
 	qqtoken "github.com/tencent-connect/botgo/token"
 	"golang.org/x/oauth2"
@@ -95,11 +98,22 @@ type qqC2CAuthor struct {
 	UnionOpenID string `json:"union_openid"`
 }
 
+type qqAttachment struct {
+	URL         string `json:"url"`
+	FileName    string `json:"filename"`
+	ContentType string `json:"content_type"`
+}
+
 type qqC2CMessageEvent struct {
-	ID        string      `json:"id"`
-	Content   string      `json:"content"`
-	Timestamp string      `json:"timestamp"`
-	Author    qqC2CAuthor `json:"author"`
+	ID          string         `json:"id"`
+	Content     string         `json:"content"`
+	Timestamp   string         `json:"timestamp"`
+	Author      qqC2CAuthor    `json:"author"`
+	Attachments []qqAttachment `json:"attachments"`
+}
+
+type qqFileUploadResult struct {
+	FileInfo json.RawMessage `json:"file_info"`
 }
 
 // QQChannel QQ 机器人频道
@@ -237,6 +251,63 @@ func (q *QQChannel) SendMessage(chatID string, text string) error {
 	body := map[string]interface{}{
 		"content":  content,
 		"msg_type": 0,
+	}
+	if msgSeq > 0 {
+		body["msg_seq"] = msgSeq
+	}
+	if msgID != "" {
+		body["msg_id"] = msgID
+	}
+
+	return q.apiJSON(context.Background(), accessToken, http.MethodPost, "/v2/users/"+openID+"/messages", body, nil)
+}
+
+// SendPhoto 发送 QQ 私聊图片消息
+func (q *QQChannel) SendPhoto(chatID string, photoPath string, caption string) error {
+	if !q.IsEnabled() {
+		return fmt.Errorf("qq channel not enabled")
+	}
+
+	openID := strings.TrimSpace(chatID)
+	if openID == "" {
+		return fmt.Errorf("qq chat id is empty")
+	}
+
+	fileData, err := loadQQFileData(photoPath, q.httpClient)
+	if err != nil {
+		return err
+	}
+
+	accessToken, err := q.currentAccessToken()
+	if err != nil {
+		return err
+	}
+
+	var upload qqFileUploadResult
+	if err := q.apiJSON(context.Background(), accessToken, http.MethodPost, "/v2/users/"+openID+"/files", map[string]interface{}{
+		"file_type":    1,
+		"file_data":    fileData,
+		"srv_send_msg": false,
+	}, &upload); err != nil {
+		return err
+	}
+	if len(upload.FileInfo) == 0 {
+		return fmt.Errorf("qq upload did not return file_info")
+	}
+
+	q.mu.Lock()
+	msgID := q.lastInboundMsg[openID]
+	msgSeq := q.nextReplySeqLocked(msgID)
+	q.mu.Unlock()
+
+	body := map[string]interface{}{
+		"msg_type": 7,
+		"media": map[string]interface{}{
+			"file_info": upload.FileInfo,
+		},
+	}
+	if text := strings.TrimSpace(caption); text != "" {
+		body["content"] = text
 	}
 	if msgSeq > 0 {
 		body["msg_seq"] = msgSeq
@@ -450,6 +521,17 @@ func (q *QQChannel) handleC2CMessage(event *qqC2CMessageEvent) {
 	}
 
 	text := strings.TrimSpace(event.Content)
+	media := qqInboundMedia(event.Attachments)
+	if text == "" && media != nil {
+		switch media.Type {
+		case "image":
+			text = "[Image]"
+		case "document":
+			text = "[Document]"
+		default:
+			text = "[Attachment]"
+		}
+	}
 	if text == "" {
 		return
 	}
@@ -464,8 +546,89 @@ func (q *QQChannel) handleC2CMessage(event *qqC2CMessageEvent) {
 		Sender:  sender,
 		ChatID:  sender,
 		Channel: "qq",
+		Media:   media,
 		Raw:     event,
 	})
+}
+
+func qqInboundMedia(attachments []qqAttachment) *bus.MediaAttachment {
+	for _, attachment := range attachments {
+		contentType := strings.TrimSpace(attachment.ContentType)
+		if strings.HasPrefix(strings.ToLower(contentType), "image/") {
+			return &bus.MediaAttachment{
+				Type:     "image",
+				URL:      normalizeQQAttachmentURL(attachment.URL),
+				MimeType: contentType,
+			}
+		}
+	}
+
+	for _, attachment := range attachments {
+		url := normalizeQQAttachmentURL(attachment.URL)
+		if url == "" && strings.TrimSpace(attachment.FileName) == "" {
+			continue
+		}
+		return &bus.MediaAttachment{
+			Type:     "document",
+			URL:      url,
+			MimeType: strings.TrimSpace(attachment.ContentType),
+		}
+	}
+
+	return nil
+}
+
+func normalizeQQAttachmentURL(raw string) string {
+	value := strings.TrimSpace(raw)
+	if value == "" {
+		return ""
+	}
+	if strings.HasPrefix(value, "//") {
+		return "https:" + value
+	}
+	return value
+}
+
+func loadQQFileData(fileRef string, client *http.Client) (string, error) {
+	fileRef = strings.TrimSpace(fileRef)
+	if fileRef == "" {
+		return "", fmt.Errorf("qq file path is empty")
+	}
+	if strings.HasPrefix(fileRef, "base64://") {
+		return strings.TrimPrefix(fileRef, "base64://"), nil
+	}
+	if strings.HasPrefix(strings.ToLower(fileRef), "data:") {
+		parts := strings.SplitN(fileRef, ",", 2)
+		if len(parts) != 2 || !strings.Contains(strings.ToLower(parts[0]), ";base64") {
+			return "", fmt.Errorf("qq data url must be base64 encoded")
+		}
+		return parts[1], nil
+	}
+	if strings.HasPrefix(fileRef, "http://") || strings.HasPrefix(fileRef, "https://") {
+		httpClient := client
+		if httpClient == nil {
+			httpClient = &http.Client{Timeout: 30 * time.Second}
+		}
+		resp, err := httpClient.Get(fileRef)
+		if err != nil {
+			return "", fmt.Errorf("download qq media: %w", err)
+		}
+		defer resp.Body.Close()
+		if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+			return "", fmt.Errorf("download qq media failed: status=%d", resp.StatusCode)
+		}
+		data, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return "", fmt.Errorf("read qq media response: %w", err)
+		}
+		return base64.StdEncoding.EncodeToString(data), nil
+	}
+
+	data, err := os.ReadFile(fileRef)
+	if err != nil {
+		return "", fmt.Errorf("read qq media file: %w", err)
+	}
+	return base64.StdEncoding.EncodeToString(data), nil
 }
 
 func (q *QQChannel) currentAccessToken() (string, error) {
