@@ -800,11 +800,21 @@ func (a *AgentLoop) ProcessDirectWithSkills(
 	content, sessionKey, channel, chatID string,
 	selectedSkills []string,
 ) (string, error) {
+	return a.ProcessDirectWithMediaAndSkills(ctx, content, sessionKey, channel, chatID, selectedSkills, nil)
+}
+
+func (a *AgentLoop) ProcessDirectWithMediaAndSkills(
+	ctx context.Context,
+	content, sessionKey, channel, chatID string,
+	selectedSkills []string,
+	media *bus.MediaAttachment,
+) (string, error) {
 	msg := bus.NewInboundMessage(channel, "user", chatID, content)
 	if sessionKey != "" {
 		msg.SessionKey = sessionKey
 	}
 	msg.SelectedSkills = normalizeSkillRefs(selectedSkills)
+	msg.Media = media
 
 	resp, err := a.ProcessMessage(ctx, msg)
 	if err != nil {
@@ -1004,7 +1014,7 @@ func (a *AgentLoop) ProcessDirectEventStream(
 	content, sessionKey, channel, chatID string,
 	onEvent func(StreamEvent),
 ) (string, error) {
-	return a.ProcessDirectEventStreamWithSkills(ctx, content, sessionKey, channel, chatID, nil, onEvent)
+	return a.ProcessDirectEventStreamWithMediaAndSkills(ctx, content, sessionKey, channel, chatID, nil, nil, onEvent)
 }
 
 func (a *AgentLoop) ProcessDirectEventStreamWithSkills(
@@ -1013,11 +1023,22 @@ func (a *AgentLoop) ProcessDirectEventStreamWithSkills(
 	selectedSkills []string,
 	onEvent func(StreamEvent),
 ) (string, error) {
+	return a.ProcessDirectEventStreamWithMediaAndSkills(ctx, content, sessionKey, channel, chatID, selectedSkills, nil, onEvent)
+}
+
+func (a *AgentLoop) ProcessDirectEventStreamWithMediaAndSkills(
+	ctx context.Context,
+	content, sessionKey, channel, chatID string,
+	selectedSkills []string,
+	media *bus.MediaAttachment,
+	onEvent func(StreamEvent),
+) (string, error) {
 	msg := bus.NewInboundMessage(channel, "user", chatID, content)
 	if sessionKey != "" {
 		msg.SessionKey = sessionKey
 	}
 	msg.SelectedSkills = normalizeSkillRefs(selectedSkills)
+	msg.Media = media
 
 	// 创建可中断上下文
 	ic := NewInterruptibleContext(ctx, a.Bus)

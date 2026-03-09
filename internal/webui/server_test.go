@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/Lichas/maxclaw/internal/bus"
 	"github.com/Lichas/maxclaw/internal/config"
 	"github.com/stretchr/testify/assert"
 )
@@ -66,6 +67,55 @@ func TestEnrichContentWithAttachmentsURLFallbackAndDeduplicate(t *testing.T) {
 	expectedPath := filepath.Join(workspace, ".uploads", "20260222_a1b2c3d4.docx")
 	assert.Contains(t, out, expectedPath)
 	assert.Equal(t, 1, strings.Count(out, expectedPath))
+}
+
+func TestExtractImageAttachmentUsesLocalImagePath(t *testing.T) {
+	workspace := filepath.Join(string(filepath.Separator), "tmp", "ws")
+	s := &Server{
+		cfg: &config.Config{
+			Agents: config.AgentsConfig{
+				Defaults: config.AgentDefaults{
+					Workspace: workspace,
+				},
+			},
+		},
+	}
+
+	got := s.extractImageAttachment([]messageAttachment{
+		{
+			Filename: "screenshot.png",
+			Path:     filepath.Join(workspace, ".uploads", "20260222_image.png"),
+		},
+	})
+
+	assert.Equal(t, &bus.MediaAttachment{
+		Type:      "image",
+		Filename:  "screenshot.png",
+		LocalPath: filepath.Join(workspace, ".uploads", "20260222_image.png"),
+		MimeType:  "image/png",
+	}, got)
+}
+
+func TestExtractImageAttachmentIgnoresNonImageFiles(t *testing.T) {
+	workspace := filepath.Join(string(filepath.Separator), "tmp", "ws")
+	s := &Server{
+		cfg: &config.Config{
+			Agents: config.AgentsConfig{
+				Defaults: config.AgentDefaults{
+					Workspace: workspace,
+				},
+			},
+		},
+	}
+
+	got := s.extractImageAttachment([]messageAttachment{
+		{
+			Filename: "report.pdf",
+			Path:     filepath.Join(workspace, ".uploads", "20260222_report.pdf"),
+		},
+	})
+
+	assert.Nil(t, got)
 }
 
 func TestReadChannelSenderStatsAggregatesInboundMessages(t *testing.T) {

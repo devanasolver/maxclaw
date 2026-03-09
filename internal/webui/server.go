@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"mime"
 	"net"
 	"net/http"
 	"os"
@@ -19,6 +20,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/Lichas/maxclaw/internal/agent"
+	"github.com/Lichas/maxclaw/internal/bus"
 	"github.com/Lichas/maxclaw/internal/channels"
 	"github.com/Lichas/maxclaw/internal/config"
 	"github.com/Lichas/maxclaw/internal/cron"
@@ -367,7 +369,15 @@ func (s *Server) handleMessage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	enrichedContent := s.enrichContentWithAttachments(payload.Content, payload.Attachments)
-	resp, err := s.agentLoop.ProcessDirectWithSkills(r.Context(), enrichedContent, payload.SessionKey, payload.Channel, payload.ChatID, payload.SelectedSkills)
+	resp, err := s.agentLoop.ProcessDirectWithMediaAndSkills(
+		r.Context(),
+		enrichedContent,
+		payload.SessionKey,
+		payload.Channel,
+		payload.ChatID,
+		payload.SelectedSkills,
+		s.extractImageAttachment(payload.Attachments),
+	)
 	if err != nil {
 		writeError(w, err)
 		if lg := logging.Get(); lg != nil && lg.Web != nil {
@@ -481,13 +491,14 @@ func (s *Server) handleMessageStream(w http.ResponseWriter, r *http.Request, pay
 	defer cancel()
 
 	var streamWriteErr error
-	resp, err := s.agentLoop.ProcessDirectEventStreamWithSkills(
+	resp, err := s.agentLoop.ProcessDirectEventStreamWithMediaAndSkills(
 		ctx,
 		s.enrichContentWithAttachments(payload.Content, payload.Attachments),
 		payload.SessionKey,
 		payload.Channel,
 		payload.ChatID,
 		payload.SelectedSkills,
+		s.extractImageAttachment(payload.Attachments),
 		func(event agent.StreamEvent) {
 			if streamWriteErr != nil {
 				return
@@ -595,6 +606,41 @@ func (s *Server) enrichContentWithAttachments(content string, attachments []mess
 	}
 	b.WriteString("If the user asks about an attached file, read it from the path above before answering.")
 	return b.String()
+}
+
+func (s *Server) extractImageAttachment(attachments []messageAttachment) *bus.MediaAttachment {
+	for _, att := range attachments {
+		path := strings.TrimSpace(att.Path)
+		if path == "" {
+			continue
+		}
+		if !filepath.IsAbs(path) {
+			path = filepath.Join(s.cfg.Agents.Defaults.Workspace, path)
+		}
+		path = filepath.Clean(path)
+
+		ext := strings.ToLower(filepath.Ext(path))
+		if ext == "" {
+			continue
+		}
+		mimeType := mime.TypeByExtension(ext)
+		if !strings.HasPrefix(mimeType, "image/") {
+			continue
+		}
+
+		filename := strings.TrimSpace(att.Filename)
+		if filename == "" {
+			filename = filepath.Base(path)
+		}
+		return &bus.MediaAttachment{
+			Type:      "image",
+			Filename:  filename,
+			LocalPath: path,
+			MimeType:  mimeType,
+		}
+	}
+
+	return nil
 }
 
 func (s *Server) handleSkills(w http.ResponseWriter, r *http.Request) {

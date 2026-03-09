@@ -32,6 +32,10 @@
   - `internal/config/schema.go`、`internal/config/config_test.go`
   - 验证：`go test ./internal/config`、`make build`
 
+- **桌面上传图片接入多模态链路**：Web UI / Electron 的本地图片附件不再只拼接成路径文本，而是同步提取为 `MediaAttachment` 传入 agent，使 `desktop` 通道也能把本地图片作为真正的图片输入交给支持视觉的模型
+  - `internal/agent/loop.go`、`internal/webui/server.go`、`internal/webui/server_test.go`
+  - 验证：`go test ./internal/agent ./internal/webui`、`make build`
+
 - **入站图片媒体管线落地**：新增通用 `internal/media` 管线，QQ/Telegram 入站图片会先解析并缓存到本地，再由 Provider 按模型能力编码；视觉模型优先使用本地缓存图片生成 `data:` URL，非视觉模型保留文本降级，纯图片消息不再触发重工具链绕路下载/OCR
   - `ARCHITECTURE.md`、`internal/bus/events.go`、`internal/media/manager.go`、`internal/media/manager_test.go`、`internal/channels/telegram.go`、`internal/channels/qq.go`、`internal/channels/telegram_media_test.go`、`internal/agent/context.go`、`internal/agent/context_test.go`、`internal/agent/loop.go`、`internal/agent/loop_test.go`、`internal/providers/base.go`、`internal/providers/capabilities.go`、`internal/providers/openai.go`、`internal/providers/openai_test.go`、`internal/cli/gateway.go`
   - 验证：`go test ./internal/media ./internal/providers ./internal/agent ./internal/channels ./internal/cli`、`make build`
