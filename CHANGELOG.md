@@ -48,6 +48,10 @@
   - `electron/src/renderer/views/ChatView.tsx`
   - 验证：`cd electron && npm run build`、`make build`
 
+- **桌面端 Gateway 状态来源解耦**：取消 WebSocket 客户端对全局 `gateway.status` 的直接写入，桌面状态徽标统一以主进程健康检查为准，避免 WebSocket 短暂异常把实际在线的 Gateway 错误显示为离线
+  - `electron/src/renderer/services/websocket.ts`
+  - 验证：`cd electron && npm run build`、`make build`
+
 - **模型级多模态能力改为配置驱动**：新增 `providers.<name>.models[].supportsImageInput`，Provider 运行时优先读取显式模型能力，设置页新增 `Multimodal` 开关，Agent 不再按模型名提前短路 QQ/Telegram 纯图片消息；未声明时仍保留启发式回退
   - `internal/config/schema.go`、`internal/config/schema_test.go`、`internal/providers/base.go`、`internal/providers/openai.go`、`internal/providers/openai_test.go`、`internal/agent/loop.go`、`internal/agent/loop_test.go`、`internal/cli/agent.go`、`internal/cli/cron.go`、`internal/cli/gateway.go`、`internal/webui/server.go`、`electron/src/renderer/types/providers.ts`、`electron/src/renderer/components/ProviderEditor.tsx`、`electron/src/renderer/views/SettingsView.tsx`、`ARCHITECTURE.md`
   - 验证：`go test ./internal/config ./internal/providers ./internal/agent ./internal/cli ./internal/webui`、`cd electron && npm run build`、`make build`

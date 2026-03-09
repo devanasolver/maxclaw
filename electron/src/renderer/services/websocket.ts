@@ -1,6 +1,3 @@
-import { store } from '../store';
-import { setStatus } from '../store';
-
 type MessageHandler = (data: any) => void;
 
 export type WebSocketMessageType = 'chat' | 'interrupt' | 'stream' | 'status';
@@ -40,7 +37,6 @@ class WebSocketClient {
         console.log('WebSocket connected');
         this.reconnectAttempts = 0;
         this.isConnecting = false;
-        store.dispatch(setStatus({ state: 'running', port: 18890 }));
       };
 
       this.ws.onmessage = (event) => {
@@ -56,7 +52,6 @@ class WebSocketClient {
       this.ws.onerror = (error) => {
         console.error('WebSocket error:', error);
         this.isConnecting = false;
-        store.dispatch(setStatus({ state: 'error', port: 18890, error: 'Connection failed' }));
       };
     } catch (error) {
       console.error('Failed to create WebSocket:', error);
