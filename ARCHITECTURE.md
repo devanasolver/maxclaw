@@ -38,6 +38,11 @@ vercel --prod --yes
   - 会话与记忆保存在 workspace 目录
   - 自动注入长期记忆 `memory/MEMORY.md` 与短周期心跳 `memory/heartbeat.md`
   - **智能打断支持**：支持流式生成时的用户插话/打断（见下文）
+- **Session Metadata (`internal/session`)**：
+  - 会话正文与标题分离存储，`Session.Title` 不再复用最后一条消息
+  - 支持 `TitleSource=auto|user` 与 `TitleState=pending|stable`
+  - 自动标题基于用户消息启发式生成，并在会话进入稳定阶段时允许一次自动精修
+  - 手动重命名只更新标题元数据，不覆盖消息正文
 - **Memory Summarizer (`internal/memory`)**：
   - Gateway 启动后按小时检查一次
   - 将”前一天会话摘要”幂等追加到 `memory/MEMORY.md`（`## Daily Summaries`）
@@ -175,6 +180,19 @@ flowchart LR
     - 聚合维度：`channel + sender`
     - 展示内容：发送人标识、最近一条入站消息、最近时间、累计发送次数
     - 目标：让用户无需手工翻日志，就能把最近发过消息的 sender/OpenID 一键加入 `allowFrom`
+
+### 会话标题策略
+
+- **独立字段**：标题保存在 `Session.Title`，列表展示优先读取该字段，`lastMessage` 仅作为预览内容
+- **自动命名时机**：
+  - 用户第一条有效消息入库后先生成 `pending` 标题
+  - 当会话已有助手回复且消息/工具执行达到稳定阈值后，允许自动刷新一次并标记为 `stable`
+- **手动覆盖**：
+  - `/api/sessions/{key}/rename` 只更新标题元数据
+  - 一旦 `TitleSource=user`，后续自动命名不会再覆盖
+- **历史会话懒迁移**：
+  - 旧 `.sessions/*.json` 在列表读取时会自动补标题并回写磁盘
+  - 这样无需额外迁移脚本，也能让历史任务逐步获得独立标题
 
 ## Electron Desktop App 架构
 

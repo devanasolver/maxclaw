@@ -33,6 +33,7 @@ SEO keywords: `Go AI Agent`, `local AI assistant`, `self-hosted AI agent`, `priv
 - Desktop UI + Web UI + API on the same port
 - `executionMode=auto` for unattended long-running tasks
 - `spawn` sub-sessions with independent context/model/source and status callbacks
+- Automatic task titles that summarize sessions without overwriting message content
 - Monorepo-aware recursive context discovery (`AGENTS.md` / `CLAUDE.md`)
 - Multi-channel integrations: Telegram, WhatsApp (Bridge), Discord, WebSocket
 - Cron/Once/Every scheduler + daily memory digest

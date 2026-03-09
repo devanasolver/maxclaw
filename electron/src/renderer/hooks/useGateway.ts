@@ -45,6 +45,7 @@ export interface GatewayStreamEvent {
 
 export interface SessionSummary {
   key: string;
+  title?: string;
   messageCount: number;
   lastMessageAt?: string;
   lastMessage?: string;
@@ -52,6 +53,7 @@ export interface SessionSummary {
 
 export interface SessionDetail {
   key: string;
+  title?: string;
   messages: Array<{
     role: string;
     content: string;

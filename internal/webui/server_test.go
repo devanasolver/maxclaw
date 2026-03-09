@@ -1,6 +1,10 @@
 package webui
 
 import (
+	"bytes"
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"strings"
@@ -8,7 +12,9 @@ import (
 
 	"github.com/Lichas/maxclaw/internal/bus"
 	"github.com/Lichas/maxclaw/internal/config"
+	"github.com/Lichas/maxclaw/internal/session"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestEnrichContentWithAttachments(t *testing.T) {
@@ -160,4 +166,65 @@ func TestReadChannelSenderStatsFiltersByChannel(t *testing.T) {
 		assert.Equal(t, "qq", stats[0].Channel)
 		assert.Equal(t, "qq-openid-1", stats[0].Sender)
 	}
+}
+
+func TestListSessionsBackfillsLegacyTitle(t *testing.T) {
+	workspace := t.TempDir()
+	require.NoError(t, os.MkdirAll(filepath.Join(workspace, ".sessions"), 0755))
+
+	legacy := map[string]any{
+		"key": "desktop:legacy",
+		"messages": []map[string]any{
+			{
+				"role":      "user",
+				"content":   "帮我检查 QQ 图片消息为什么没有回复",
+				"timestamp": "2026-03-09T10:00:00Z",
+			},
+		},
+	}
+	data, err := json.MarshalIndent(legacy, "", "  ")
+	require.NoError(t, err)
+	require.NoError(t, os.WriteFile(filepath.Join(workspace, ".sessions", "desktop_legacy.json"), data, 0644))
+
+	list, err := listSessions(workspace)
+	require.NoError(t, err)
+	if assert.Len(t, list, 1) {
+		assert.Equal(t, "检查 QQ 图片消息为什么没有回复", list[0].Title)
+		assert.Equal(t, "帮我检查 QQ 图片消息为什么没有回复", list[0].LastMessage)
+	}
+
+	mgr := session.NewManager(workspace)
+	loaded := mgr.GetOrCreate("desktop:legacy")
+	assert.Equal(t, "检查 QQ 图片消息为什么没有回复", loaded.Title)
+	assert.Equal(t, session.TitleSourceAuto, loaded.TitleSource)
+}
+
+func TestRenameSessionStoresDedicatedTitle(t *testing.T) {
+	workspace := t.TempDir()
+	mgr := session.NewManager(workspace)
+	sess := mgr.GetOrCreate("desktop:test")
+	sess.AddMessage("user", "帮我修复 telegram 图片消息")
+	sess.AddMessage("assistant", "好的")
+	require.NoError(t, mgr.Save(sess))
+
+	s := &Server{
+		cfg: &config.Config{
+			Agents: config.AgentsConfig{
+				Defaults: config.AgentDefaults{Workspace: workspace},
+			},
+		},
+	}
+
+	body := bytes.NewBufferString(`{"title":"Telegram 图片支持修复"}`)
+	req := httptest.NewRequest(http.MethodPost, "/api/sessions/desktop:test/rename", body)
+	rec := httptest.NewRecorder()
+
+	s.handleSessionPost(rec, req)
+	require.Equal(t, http.StatusOK, rec.Code)
+
+	updated := session.NewManager(workspace).GetOrCreate("desktop:test")
+	assert.Equal(t, "Telegram 图片支持修复", updated.Title)
+	assert.Equal(t, session.TitleSourceUser, updated.TitleSource)
+	require.Len(t, updated.Messages, 2)
+	assert.Equal(t, "好的", updated.Messages[1].Content)
 }

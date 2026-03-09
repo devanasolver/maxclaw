@@ -32,6 +32,10 @@ type TimelineEntry struct {
 // Session 会话
 type Session struct {
 	Key              string    `json:"key"`
+	Title            string    `json:"title,omitempty"`
+	TitleSource      string    `json:"titleSource,omitempty"`
+	TitleState       string    `json:"titleState,omitempty"`
+	TitleUpdatedAt   time.Time `json:"titleUpdatedAt,omitempty"`
 	Messages         []Message `json:"messages"`
 	LastConsolidated int       `json:"lastConsolidated,omitempty"`
 }
@@ -78,6 +82,7 @@ func (m *Manager) Save(session *Session) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
+	RefreshTitle(session)
 	m.sessions[session.Key] = session
 	return m.saveToFile(session)
 }

@@ -89,6 +89,7 @@ Language: **中文** | [English](README.md)
 - 开箱即用：`onboard` 初始化模板，一键安装快速启动
 - 全自动模式（`executionMode=auto`）适合长流程任务
 - 子会话 `spawn` 支持独立上下文、模型和状态回传
+- 会话标题自动总结：历史任务会生成独立标题，不再直接污染最后一条消息内容
 - Monorepo 上下文发现：递归 `AGENTS.md` / `CLAUDE.md`
 - 多渠道接入：Telegram、WhatsApp（Bridge）、Discord、WebSocket
 - 定时任务（Cron/Once/Every）+ 每日 Memory 汇总

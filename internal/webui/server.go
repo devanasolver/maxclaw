@@ -283,22 +283,18 @@ func (s *Server) handleSessionPost(w http.ResponseWriter, r *http.Request) {
 			writeError(w, err)
 			return
 		}
+		req.Title = strings.TrimSpace(req.Title)
+		if req.Title == "" {
+			writeError(w, fmt.Errorf("title is required"))
+			return
+		}
 
 		mgr := session.NewManager(s.cfg.Agents.Defaults.Workspace)
 		sess := mgr.GetOrCreate(key)
-
-		// Update the last message as the title
-		if len(sess.Messages) > 0 {
-			sess.Messages[len(sess.Messages)-1].Content = req.Title
-			sess.Messages[len(sess.Messages)-1].Timestamp = time.Now()
-		} else {
-			// If no messages, create a system message with the title
-			sess.Messages = append(sess.Messages, session.Message{
-				Role:      "system",
-				Content:   req.Title,
-				Timestamp: time.Now(),
-			})
-		}
+		sess.Title = req.Title
+		sess.TitleSource = session.TitleSourceUser
+		sess.TitleState = session.TitleStateStable
+		sess.TitleUpdatedAt = time.Now()
 
 		if err := mgr.Save(sess); err != nil {
 			writeError(w, err)
@@ -1710,6 +1706,7 @@ func listSessions(workspace string) ([]sessionSummary, error) {
 		return nil, err
 	}
 
+	mgr := session.NewManager(workspace)
 	var results []sessionSummary
 	for _, entry := range entries {
 		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".json") {
@@ -1724,9 +1721,13 @@ func listSessions(workspace string) ([]sessionSummary, error) {
 		if err := json.Unmarshal(data, &sess); err != nil {
 			continue
 		}
+		if session.RefreshTitle(&sess) {
+			_ = mgr.Save(&sess)
+		}
 		summary := sessionSummary{
 			Key:          sess.Key,
 			MessageCount: len(sess.Messages),
+			Title:        sess.Title,
 		}
 		if len(sess.Messages) > 0 {
 			last := sess.Messages[len(sess.Messages)-1]
@@ -1757,6 +1758,7 @@ func summarizeSkillBody(body string, maxRunes int) string {
 
 type sessionSummary struct {
 	Key           string `json:"key"`
+	Title         string `json:"title,omitempty"`
 	MessageCount  int    `json:"messageCount"`
 	LastMessageAt string `json:"lastMessageAt,omitempty"`
 	LastMessage   string `json:"lastMessage,omitempty"`

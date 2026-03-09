@@ -4,6 +4,10 @@
 
 ### Added
 
+- **会话独立标题与自动命名**：新增 `Session.Title` / `TitleSource` / `TitleState` 元数据，自动根据用户消息生成任务标题，历史会话在列表读取时懒补标题，手动重命名不再覆写最后一条消息正文
+  - `internal/session/manager.go`、`internal/session/title.go`、`internal/session/title_test.go`、`internal/webui/server.go`、`internal/webui/server_test.go`、`electron/src/renderer/hooks/useGateway.ts`、`electron/src/renderer/components/Sidebar.tsx`、`electron/src/renderer/views/SessionsView.tsx`、`README.md`、`README.zh.md`、`ARCHITECTURE.md`
+  - 验证：`go test ./internal/session ./internal/webui`、`cd electron && npm run build`、`make build`
+
 - **开发重启命令与独立 Gateway 文档补齐**：新增 `make dev-gateway`、`make backend-restart`、`make dev-electron` 等开发入口，补充 `Makefile` 注释，并将 README / 安装脚本统一到 `maxclaw` CLI + `maxclaw-gateway` 独立后端的双二进制说明
   - `Makefile`、`README.md`、`README.zh.md`、`install_mac.sh`、`install_linux.sh`、`scripts/run_gateway.sh`、`scripts/start_all.sh`、`scripts/start_daemon.sh`、`scripts/stop_daemon.sh`
   - 验证：`make build`、`cd electron && npm run build`

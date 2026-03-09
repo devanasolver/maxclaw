@@ -57,6 +57,7 @@ export function Sidebar() {
   const buildDraftSession = (key: string): SessionSummary => ({
     key,
     messageCount: 0,
+    title: t('sidebar.newTask'),
     lastMessage: t('sidebar.newTask'),
     lastMessageAt: new Date().toISOString()
   });
@@ -118,11 +119,23 @@ export function Sidebar() {
   }, []);
 
   const getSessionDisplayTitle = (session: SessionSummary): string => {
-    const title = (session.lastMessage || '').trim();
+    const title = (session.title || '').trim();
     if (title !== '') {
       return title;
     }
+    const fallback = (session.lastMessage || '').trim();
+    if (fallback !== '') {
+      return fallback;
+    }
     return session.key.replace(/^desktop:/, t('sidebar.newTask'));
+  };
+
+  const getSessionPreview = (session: SessionSummary): string => {
+    const preview = (session.lastMessage || '').trim();
+    if (!preview) {
+      return '';
+    }
+    return preview === getSessionDisplayTitle(session) ? '' : preview;
   };
 
   const handleDelete = (session: SessionSummary) => {
@@ -161,7 +174,7 @@ export function Sidebar() {
 
   const handleStartRename = (session: SessionSummary) => {
     setEditingSession(session.key);
-    setEditTitle(session.lastMessage || session.key);
+    setEditTitle(getSessionDisplayTitle(session));
     setOpenMenuKey(null);
   };
 
@@ -175,14 +188,14 @@ export function Sidebar() {
       if (!isDraftOnly) {
         await renameSession(editingSession, editTitle.trim());
       }
-      setSessions((prev) => prev.map((s) => (s.key === editingSession ? { ...s, lastMessage: editTitle.trim() } : s)));
+      setSessions((prev) => prev.map((s) => (s.key === editingSession ? { ...s, title: editTitle.trim() } : s)));
       setDraftSessions((prev) => {
         if (!prev[editingSession]) {
           return prev;
         }
         return {
           ...prev,
-          [editingSession]: { ...prev[editingSession], lastMessage: editTitle.trim() }
+          [editingSession]: { ...prev[editingSession], title: editTitle.trim() }
         };
       });
     } catch {
@@ -414,9 +427,10 @@ export function Sidebar() {
               )}
 
               {sessionItems.map((session) => {
-                const isCurrent = session.key === currentSessionKey;
-                const isEditing = editingSession === session.key;
-                const isMenuOpen = openMenuKey === session.key;
+              const isCurrent = session.key === currentSessionKey;
+              const isEditing = editingSession === session.key;
+              const isMenuOpen = openMenuKey === session.key;
+              const preview = getSessionPreview(session);
 
                 if (isEditing) {
                   return (
@@ -463,8 +477,13 @@ export function Sidebar() {
                       className="flex-1 text-left min-w-0"
                     >
                       <p className="truncate text-[14px] font-medium leading-5" style={{ color: 'var(--foreground)' }}>
-                        {session.lastMessage || session.key.replace(/^desktop:/, '新任务')}
+                        {getSessionDisplayTitle(session)}
                       </p>
+                      {preview && (
+                        <p className="truncate text-[11px] leading-4" style={{ color: 'var(--muted)' }}>
+                          {preview}
+                        </p>
+                      )}
                       <p className="mt-0.5 text-[11px] leading-5" style={{ color: 'var(--muted)' }}>
                         {getChannelLabel(extractSessionChannel(session.key), language)} · {formatRelativeTime(session.lastMessageAt)}
                       </p>

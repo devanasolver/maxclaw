@@ -26,6 +26,18 @@ function formatRelativeTime(time?: string): string {
   return `${days}d`;
 }
 
+function getSessionDisplayTitle(session: SessionSummary): string {
+  const title = (session.title || '').trim();
+  if (title !== '') {
+    return title;
+  }
+  const fallback = (session.lastMessage || '').trim();
+  if (fallback !== '') {
+    return fallback;
+  }
+  return session.key.replace(/^desktop:/, '新任务');
+}
+
 export function SessionsView() {
   const dispatch = useDispatch();
   const { language } = useTranslation();
@@ -119,6 +131,7 @@ export function SessionsView() {
         if (!searchQuery.trim()) return true;
         const query = searchQuery.toLowerCase();
         return (
+          (session.title?.toLowerCase().includes(query) ?? false) ||
           (session.lastMessage?.toLowerCase().includes(query) ?? false) ||
           session.key.toLowerCase().includes(query)
         );
@@ -151,7 +164,7 @@ export function SessionsView() {
 
   const handleStartRename = (session: SessionSummary) => {
     setEditingSession(session.key);
-    setEditTitle(session.lastMessage || session.key);
+    setEditTitle(getSessionDisplayTitle(session));
     setOpenMenuKey(null);
   };
 
@@ -164,7 +177,7 @@ export function SessionsView() {
       await renameSession(editingSession, editTitle.trim());
       setSessions((prev) =>
         prev.map((s) =>
-          s.key === editingSession ? { ...s, lastMessage: editTitle.trim() } : s
+          s.key === editingSession ? { ...s, title: editTitle.trim() } : s
         )
       );
     } catch {
@@ -250,6 +263,8 @@ export function SessionsView() {
           <div className="space-y-2">
             {filteredSessions.map((session) => {
               const isEditing = editingSession === session.key;
+              const preview = (session.lastMessage || '').trim();
+              const title = getSessionDisplayTitle(session);
 
               if (isEditing) {
                 return (
@@ -282,8 +297,11 @@ export function SessionsView() {
                       className="flex-1 text-left min-w-0"
                     >
                       <h3 className="font-semibold text-foreground truncate">
-                        {session.lastMessage || session.key.replace(/^desktop:/, '新任务')}
+                        {title}
                       </h3>
+                      {preview && preview !== title && (
+                        <p className="mt-1 truncate text-sm text-foreground/55">{preview}</p>
+                      )}
                       <div className="mt-1 flex items-center gap-3 text-xs text-foreground/50">
                         <span className="inline-flex items-center gap-1">
                           <span
