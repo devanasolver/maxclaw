@@ -2160,8 +2160,18 @@ export function ChatView() {
                   <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-foreground/42">
                     Local-first operator
                   </p>
-                  <h1 className="mt-3 text-[44px] font-semibold tracking-[-0.06em] text-foreground">
-                    {t('chat.starter.title')}
+                  <h1 className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 text-[44px] font-semibold tracking-[-0.06em] text-foreground">
+                    <span>{language === 'zh' ? '启动你的' : 'Launch your'}</span>
+                    <span className="inline-flex items-center gap-2">
+                      <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#192233] shadow-[0_12px_28px_rgba(25,34,51,0.18)]">
+                        <img
+                          src="./icon.png"
+                          alt="MaxClaw"
+                          className="h-7 w-7 object-contain"
+                        />
+                      </span>
+                      <span>MaxClaw</span>
+                    </span>
                   </h1>
                   <p className="mt-4 max-w-xl text-[17px] leading-8 text-foreground/62">
                     {t('chat.starter.subtitle')}

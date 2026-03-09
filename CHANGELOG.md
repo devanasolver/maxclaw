@@ -64,6 +64,10 @@
   - `electron/src/renderer/views/ChatView.tsx`
   - 验证：`cd electron && npm run build`、`make build`
 
+- **新建任务标题补充品牌图标**：在启动页主标题中的 `MaxClaw` 前增加小螃蟹品牌 icon，强化标题识别并与应用图标保持一致
+  - `electron/src/renderer/views/ChatView.tsx`
+  - 验证：`cd electron && npm run build`、`make build`
+
 - **模型级多模态能力改为配置驱动**：新增 `providers.<name>.models[].supportsImageInput`，Provider 运行时优先读取显式模型能力，设置页新增 `Multimodal` 开关，Agent 不再按模型名提前短路 QQ/Telegram 纯图片消息；未声明时仍保留启发式回退
   - `internal/config/schema.go`、`internal/config/schema_test.go`、`internal/providers/base.go`、`internal/providers/openai.go`、`internal/providers/openai_test.go`、`internal/agent/loop.go`、`internal/agent/loop_test.go`、`internal/cli/agent.go`、`internal/cli/cron.go`、`internal/cli/gateway.go`、`internal/webui/server.go`、`electron/src/renderer/types/providers.ts`、`electron/src/renderer/components/ProviderEditor.tsx`、`electron/src/renderer/views/SettingsView.tsx`、`ARCHITECTURE.md`
   - 验证：`go test ./internal/config ./internal/providers ./internal/agent ./internal/cli ./internal/webui`、`cd electron && npm run build`、`make build`
