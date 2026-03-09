@@ -138,6 +138,17 @@ function formatMessageTimestamp(timestamp: Date): string {
   return `${timestamp.getFullYear()}-${pad2(timestamp.getMonth() + 1)}-${pad2(timestamp.getDate())} ${timeLabel}`;
 }
 
+function formatWorkspaceLabel(path: string): string {
+  const trimmed = path.trim();
+  if (!trimmed) {
+    return '';
+  }
+
+  const normalized = trimmed.replace(/[\\/]+$/, '');
+  const segments = normalized.split(/[/\\]/).filter(Boolean);
+  return segments[segments.length - 1] || normalized;
+}
+
 function fileReferenceCacheKey(sessionKey: string, pathHint: string): string {
   return `${sessionKey}::${pathHint.trim().toLowerCase()}`;
 }
@@ -180,8 +191,9 @@ function extractFirstURL(text: string): string {
 
 export function ChatView() {
   const dispatch = useDispatch();
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const { currentSessionKey, sidebarCollapsed, terminalVisible } = useSelector((state: RootState) => state.ui);
+  const gatewayStatus = useSelector((state: RootState) => state.gateway.status);
   const isMac = window.electronAPI.platform.isMac;
   const { sendMessage, getSession, getSessions, getSkills, getModels, getConfig, updateConfig, runBrowserAction } =
     useGateway();
@@ -419,6 +431,28 @@ export function ChatView() {
   const pendingFileRefChecksRef = useRef<Set<string>>(new Set());
 
   const isStarterMode = messages.length === 0 && streamingTimeline.length === 0;
+  const workspaceLabel = useMemo(
+    () => formatWorkspaceLabel(workspacePath) || (language === 'zh' ? '未配置工作空间' : 'No workspace'),
+    [workspacePath, language]
+  );
+  const gatewayStatusMeta = useMemo(() => {
+    if (gatewayStatus === 'running') {
+      return {
+        label: language === 'zh' ? 'Gateway 在线' : 'Gateway online',
+        tone: 'border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
+      };
+    }
+    if (gatewayStatus === 'starting') {
+      return {
+        label: language === 'zh' ? 'Gateway 启动中' : 'Gateway starting',
+        tone: 'border-amber-500/20 bg-amber-500/10 text-amber-700 dark:text-amber-300'
+      };
+    }
+    return {
+      label: language === 'zh' ? 'Gateway 离线' : 'Gateway offline',
+      tone: 'border-rose-500/20 bg-rose-500/10 text-rose-700 dark:text-rose-300'
+    };
+  }, [gatewayStatus, language]);
 
   const setBrowserCopilotOutput = (sessionKey: string, value: string) => {
     setBrowserCopilotOutputBySession((prev) => {
@@ -1290,11 +1324,15 @@ export function ChatView() {
       const activityContent = [entry.activity.summary, entry.activity.detail || ''].filter(Boolean).join('\n');
       const fileActions = renderFileActions(activityContent, `${entry.id}-activity-files`);
       return (
-        <details key={entry.id} open={defaultOpen} className="rounded-lg border border-border/65 bg-background/90">
-          <summary className="cursor-pointer list-none px-3 py-2.5">
+        <details
+          key={entry.id}
+          open={defaultOpen}
+          className="overflow-hidden rounded-[20px] border border-white/70 bg-white/82 shadow-[0_14px_34px_rgba(28,36,50,0.06)] dark:bg-white/5"
+        >
+          <summary className="cursor-pointer list-none px-4 py-3">
             <div className="flex items-center gap-2 text-sm text-foreground/80">
               <ActivityTypeIcon type={entry.activity.type} className="h-4 w-4 flex-shrink-0" />
-              <span className="text-[11px] font-semibold uppercase tracking-wide text-foreground/45">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-foreground/45">
                 {getActivityLabel(entry.activity.type)}
               </span>
               <span className="truncate">{entry.activity.summary}</span>
@@ -1302,12 +1340,12 @@ export function ChatView() {
             </div>
           </summary>
           {entry.activity.detail && (
-            <pre className="border-t border-border/60 px-3 py-2 whitespace-pre-wrap break-all font-sans text-foreground/60">
+            <pre className="whitespace-pre-wrap break-all border-t border-border/60 px-4 py-3 font-sans text-sm text-foreground/62">
               {entry.activity.detail}
             </pre>
           )}
           {fileActions && (
-            <div className={entry.activity.detail ? 'px-3 pb-2' : 'border-t border-border/60 px-3 py-2'}>
+            <div className={entry.activity.detail ? 'px-4 pb-3' : 'border-t border-border/60 px-4 py-3'}>
               {fileActions}
             </div>
           )}
@@ -1319,8 +1357,8 @@ export function ChatView() {
       return (
         <div className="space-y-3">
           {activityItems.length > 0 && (
-            <details className="rounded-xl border border-border/70 bg-secondary/35">
-              <summary className="cursor-pointer list-none px-3 py-2.5">
+            <details className="overflow-hidden rounded-[22px] border border-white/70 bg-white/78 shadow-[0_18px_38px_rgba(28,36,50,0.06)] dark:bg-white/5">
+              <summary className="cursor-pointer list-none px-4 py-3">
                 <div className="flex items-center gap-2 text-sm text-foreground/80">
                   <WorkflowIcon className="h-4 w-4 flex-shrink-0" />
                   <span className="font-medium">执行过程（{activityItems.length} 步）</span>
@@ -1328,7 +1366,7 @@ export function ChatView() {
                   <ChevronDownIcon className="ml-auto h-3.5 w-3.5 flex-shrink-0 text-foreground/40" />
                 </div>
               </summary>
-              <div className="space-y-2 border-t border-border/60 px-2 py-2">
+              <div className="space-y-2 border-t border-border/60 px-3 py-3">
                 {activityItems.map((entry) => renderActivityItem(entry))}
               </div>
             </details>
@@ -1672,11 +1710,42 @@ export function ChatView() {
   const renderComposer = (landing: boolean) => (
     <form
       onSubmit={handleSubmit}
-      className={`relative overflow-hidden rounded-[26px] border border-white/70 bg-white/78 shadow-[0_22px_55px_rgba(36,48,67,0.11)] backdrop-blur-xl ${
-        landing ? 'p-5' : 'p-4'
+      className={`relative overflow-hidden rounded-[30px] border border-white/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(252,248,242,0.82))] shadow-[0_24px_64px_rgba(28,36,50,0.12)] backdrop-blur-xl dark:bg-[linear-gradient(180deg,rgba(24,31,45,0.94),rgba(20,27,39,0.9))] ${
+        landing ? 'p-6' : 'p-5'
       }`}
     >
       <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-white/90" />
+      <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-foreground/42">
+            {landing ? (language === 'zh' ? 'Mission Brief' : 'Mission Brief') : language === 'zh' ? 'Thread Composer' : 'Thread Composer'}
+          </p>
+          <p className="mt-2 text-sm text-foreground/58">
+            {landing
+              ? language === 'zh'
+                ? '把目标、限制、验收条件和输出格式一次说清楚，MaxClaw 会自己往前推进。'
+                : 'Describe the goal, constraints, acceptance bar, and output format in one pass.'
+              : language === 'zh'
+                ? '继续补充上下文，或者直接交给 MaxClaw 执行下一步。'
+                : 'Add context or hand off the next execution step.'}
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <span className="inline-flex items-center gap-2 rounded-full border border-white/80 bg-white/72 px-3 py-1.5 text-[11px] font-medium tracking-[0.14em] text-foreground/56 dark:bg-white/10">
+            <FolderIcon className="h-3.5 w-3.5" />
+            {workspaceLabel}
+          </span>
+          <span className="inline-flex items-center rounded-full border border-white/80 bg-white/72 px-3 py-1.5 text-[11px] font-medium tracking-[0.14em] text-foreground/56 dark:bg-white/10">
+            {currentModel || (language === 'zh' ? '自动模型' : 'Auto model')}
+          </span>
+          {selectedSkills.length > 0 && (
+            <span className="inline-flex items-center rounded-full border border-primary/20 bg-primary/10 px-3 py-1.5 text-[11px] font-medium tracking-[0.14em] text-primary">
+              {selectedSkills.length} {language === 'zh' ? '个技能已激活' : 'skills active'}
+            </span>
+          )}
+        </div>
+      </div>
+      <div className="rounded-[24px] border border-white/75 bg-white/68 px-3 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.85)] dark:bg-white/5">
       <textarea
         ref={inputRef}
         value={input}
@@ -1688,12 +1757,13 @@ export function ChatView() {
           isComposingRef.current = false;
         }}
         onKeyDown={handleKeyDown}
-        placeholder="描述你的任务目标、上下文和输出要求..."
-        rows={landing ? 9 : 4}
-        className={`w-full resize-none border-none bg-transparent px-2 py-1 leading-7 text-foreground placeholder:text-foreground/35 focus:outline-none ${
+        placeholder={language === 'zh' ? '描述你的任务目标、上下文和输出要求...' : 'Describe the goal, context, and expected output...'}
+        rows={landing ? 8 : 4}
+        className={`w-full resize-none border-none bg-transparent px-2 py-1 leading-7 text-foreground placeholder:text-foreground/32 focus:outline-none ${
           landing ? 'text-[15px]' : 'text-sm'
         }`}
       />
+      </div>
 
       {/* @mention dropdown */}
       {mentionOpen && mentionSkills.length > 0 && (
@@ -1757,7 +1827,7 @@ export function ChatView() {
         </div>
       )}
 
-      <div className="mt-4 flex items-center justify-between gap-3 border-t border-border/55 pt-4">
+      <div className="mt-5 flex items-end justify-between gap-3 border-t border-border/55 pt-4">
         <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
           <CustomSelect
             value={currentModel}
@@ -1767,13 +1837,14 @@ export function ChatView() {
             disabled={modelsLoading || isGenerating}
             size="sm"
             className="w-[220px] max-w-full"
-            triggerClassName="border-white/60 bg-[#f8f9fc]"
+            triggerClassName="rounded-full border-white/70 bg-white/80 dark:bg-white/10"
+            menuClassName="border-white/70 bg-white/95 dark:bg-[#151d2b]"
           />
           {modelsLoading && <span className="text-xs text-foreground/50">加载中...</span>}
           <div ref={skillsPickerRef} className="relative flex items-center gap-2 text-xs text-foreground/55">
-            <span className="inline-flex items-center gap-1 rounded-xl border border-white/60 bg-[#f8f9fc] px-2.5 py-1.5">
+            <span className="inline-flex items-center gap-1 rounded-full border border-white/70 bg-white/80 px-2.5 py-1.5 dark:bg-white/10">
               <FolderIcon className="h-3.5 w-3.5" />
-              project
+              {workspaceLabel}
             </span>
             <FileAttachment
               attachedFiles={attachedFiles}
@@ -1786,8 +1857,8 @@ export function ChatView() {
               onClick={() => setSkillsPickerOpen((prev) => !prev)}
               className={`inline-flex items-center gap-1 rounded-xl px-2.5 py-1.5 transition-colors ${
                 selectedSkills.length > 0 || skillsPickerOpen
-                  ? 'bg-primary/15 text-primary shadow-[0_8px_20px_rgba(111,143,125,0.12)]'
-                  : 'border border-white/60 bg-[#f8f9fc] text-foreground/70 hover:bg-white'
+                  ? 'bg-primary/15 text-primary shadow-[0_8px_20px_rgba(184,103,63,0.16)]'
+                  : 'border border-white/70 bg-white/80 text-foreground/70 hover:bg-white dark:bg-white/10'
               }`}
             >
               <PuzzleIcon className="h-3.5 w-3.5" />
@@ -1804,7 +1875,7 @@ export function ChatView() {
             )}
 
             {skillsPickerOpen && (
-              <div className="absolute bottom-10 left-0 z-30 w-80 rounded-xl border border-border bg-background p-3 shadow-xl">
+              <div className="absolute bottom-10 left-0 z-30 w-80 rounded-[22px] border border-white/75 bg-white/96 p-3 shadow-[0_22px_54px_rgba(28,36,50,0.16)] dark:bg-[#151d2b]">
                 <input
                   value={skillsQuery}
                   onChange={(event) => setSkillsQuery(event.target.value)}
@@ -1856,7 +1927,7 @@ export function ChatView() {
               onClick={() => handleInterrupt('append')}
               disabled={!input.trim()}
               title="Enter 补充上下文"
-              className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-secondary px-3 text-sm font-medium text-foreground transition-colors hover:bg-secondary/80 disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex h-10 items-center gap-1.5 rounded-full border border-white/70 bg-white/82 px-4 text-sm font-medium text-foreground shadow-[0_10px_24px_rgba(28,36,50,0.08)] transition-colors hover:bg-white disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white/10"
             >
               <PlusIcon className="h-4 w-4" />
               补充
@@ -1865,7 +1936,7 @@ export function ChatView() {
               type="button"
               onClick={() => handleInterrupt('cancel')}
               title="Shift+Enter 打断并重试"
-              className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-destructive px-3 text-sm font-medium text-destructive-foreground transition-colors hover:bg-destructive/90"
+              className="inline-flex h-10 items-center gap-1.5 rounded-full bg-destructive px-4 text-sm font-medium text-destructive-foreground shadow-[0_12px_30px_rgba(194,79,77,0.24)] transition-colors hover:bg-destructive/90"
             >
               <StopIcon className="h-4 w-4" />
               打断
@@ -1875,7 +1946,7 @@ export function ChatView() {
           <button
             type="submit"
             disabled={!input.trim() || isGenerating}
-            className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-[0_12px_24px_rgba(111,143,125,0.28)] transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-[0_16px_36px_rgba(184,103,63,0.28)] transition-transform duration-150 hover:-translate-y-0.5 hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <SendIcon className="h-4 w-4" />
           </button>
@@ -1898,31 +1969,56 @@ export function ChatView() {
 
   const renderThreadHeader = () => (
     <div
-      className={`relative z-20 flex h-16 items-center border-b border-white/55 bg-white/58 backdrop-blur-xl ${
+      className={`relative z-20 border-b border-white/60 bg-white/54 backdrop-blur-xl ${
         isMac && sidebarCollapsed ? 'pl-44 pr-7' : 'px-7'
       }`}
     >
-      <div className="min-w-0">
-        <h1 className="truncate text-[15px] font-semibold tracking-[0.01em] text-foreground">{sessionTitle}</h1>
-      </div>
-      {!isStarterMode && (
-        <div className="relative z-30 ml-auto flex items-center gap-2 no-drag">
-          <button
-            type="button"
-            onClick={() => dispatch(toggleTerminal())}
-            className={`flex h-9 items-center gap-1.5 rounded-xl border px-3 text-xs shadow-[0_8px_24px_rgba(31,41,55,0.08)] transition-colors ${
-              terminalVisible
-                ? 'border-primary/30 bg-primary/12 text-primary'
-                : 'border-white/65 bg-white/78 text-foreground/70 hover:bg-white hover:text-foreground'
-            }`}
-            aria-label="Toggle terminal"
-            title="Toggle terminal"
-          >
-            <TerminalIcon className="h-3.5 w-3.5" />
-            <span>Terminal</span>
-          </button>
+      <div className="flex min-h-[88px] flex-wrap items-center justify-between gap-4 py-5">
+        <div className="min-w-0">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-foreground/42">
+            {isStarterMode ? 'Control Room' : 'Active Thread'}
+          </p>
+          <h1 className="mt-2 truncate text-[20px] font-semibold tracking-[-0.04em] text-foreground">{sessionTitle}</h1>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <span className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[11px] font-medium tracking-[0.14em] ${gatewayStatusMeta.tone}`}>
+              <span className={`status-dot ${gatewayStatus}`} />
+              {gatewayStatusMeta.label}
+            </span>
+            <span className="inline-flex items-center rounded-full border border-white/75 bg-white/72 px-3 py-1.5 text-[11px] font-medium tracking-[0.14em] text-foreground/55 dark:bg-white/10">
+              {workspaceLabel}
+            </span>
+            <span className="inline-flex items-center rounded-full border border-white/75 bg-white/72 px-3 py-1.5 text-[11px] font-medium tracking-[0.14em] text-foreground/55 dark:bg-white/10">
+              {currentModel || (language === 'zh' ? '自动模型' : 'Auto model')}
+            </span>
+            <span className="inline-flex items-center rounded-full border border-white/75 bg-white/72 px-3 py-1.5 text-[11px] font-medium tracking-[0.14em] text-foreground/55 dark:bg-white/10">
+              {messages.length} {language === 'zh' ? '条消息' : 'messages'}
+            </span>
+            {selectedSkills.length > 0 && (
+              <span className="inline-flex items-center rounded-full border border-primary/20 bg-primary/10 px-3 py-1.5 text-[11px] font-medium tracking-[0.14em] text-primary">
+                {selectedSkills.length} {language === 'zh' ? '个技能已启用' : 'skills enabled'}
+              </span>
+            )}
+          </div>
         </div>
-      )}
+        {!isStarterMode && (
+          <div className="relative z-30 ml-auto flex items-center gap-2 no-drag">
+            <button
+              type="button"
+              onClick={() => dispatch(toggleTerminal())}
+              className={`flex h-10 items-center gap-2 rounded-full border px-4 text-xs font-medium uppercase tracking-[0.18em] shadow-[0_10px_28px_rgba(31,41,55,0.08)] transition-colors ${
+                terminalVisible
+                  ? 'border-primary/30 bg-primary/12 text-primary'
+                  : 'border-white/70 bg-white/82 text-foreground/68 hover:bg-white hover:text-foreground dark:bg-white/10'
+              }`}
+              aria-label="Toggle terminal"
+              title="Toggle terminal"
+            >
+              <TerminalIcon className="h-3.5 w-3.5" />
+              <span>Terminal</span>
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 
@@ -1984,39 +2080,118 @@ export function ChatView() {
 
   if (isStarterMode) {
     return (
-      <div className="h-full flex flex-col bg-transparent">
+      <div className="flex h-full flex-col bg-transparent">
         {renderThreadHeader()}
-        <div className="min-h-0 flex flex-1">
-          <div className="flex-1 overflow-y-auto px-8 py-10 md:px-12 md:py-12">
-            <div className="mx-auto max-w-5xl">
-              <div className="mb-10 text-center">
-                <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-[22px] bg-white/72 shadow-[0_18px_44px_rgba(36,48,67,0.1)]">
-                  <img
-                    src="./icon.png"
-                    alt="maxclaw"
-                    className="h-11 w-11 object-contain"
-                  />
+        <div className="flex min-h-0 flex-1">
+          <div className="flex-1 overflow-y-auto px-8 py-8 md:px-10 md:py-10">
+            <div className="mx-auto max-w-6xl">
+              <section className="grid gap-6 xl:grid-cols-[minmax(0,1.2fr)_360px]">
+                <div className="rounded-[34px] border border-white/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.88),rgba(250,244,236,0.82))] p-6 shadow-[0_28px_70px_rgba(28,36,50,0.1)] dark:bg-[linear-gradient(180deg,rgba(24,31,45,0.92),rgba(20,27,39,0.9))] md:p-8">
+                  <div className="flex flex-wrap items-start justify-between gap-4">
+                    <div className="max-w-2xl">
+                      <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-[22px] bg-[#192233] shadow-[0_18px_44px_rgba(25,34,51,0.18)]">
+                        <img
+                          src="./icon.png"
+                          alt="maxclaw"
+                          className="h-11 w-11 object-contain"
+                        />
+                      </div>
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-foreground/42">
+                        Local-first operator
+                      </p>
+                      <h1 className="mt-3 text-[44px] font-semibold tracking-[-0.06em] text-foreground">
+                        {t('chat.starter.title')}
+                      </h1>
+                      <p className="mt-4 max-w-xl text-[17px] leading-8 text-foreground/62">
+                        {t('chat.starter.subtitle')}
+                      </p>
+                    </div>
+                    <div className="grid gap-3 sm:grid-cols-3 xl:grid-cols-1">
+                      <div className="rounded-[24px] border border-white/70 bg-white/78 px-4 py-4 shadow-[0_14px_34px_rgba(28,36,50,0.06)] dark:bg-white/5">
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-foreground/42">
+                          {language === 'zh' ? '工作空间' : 'Workspace'}
+                        </p>
+                        <p className="mt-3 text-lg font-semibold tracking-[-0.03em] text-foreground">{workspaceLabel}</p>
+                        <p className="mt-1 text-sm text-foreground/52">
+                          {workspacePath || (language === 'zh' ? '未配置默认工作目录' : 'No default workspace configured')}
+                        </p>
+                      </div>
+                      <div className="rounded-[24px] border border-white/70 bg-white/78 px-4 py-4 shadow-[0_14px_34px_rgba(28,36,50,0.06)] dark:bg-white/5">
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-foreground/42">
+                          {language === 'zh' ? '模型' : 'Model'}
+                        </p>
+                        <p className="mt-3 text-lg font-semibold tracking-[-0.03em] text-foreground">
+                          {currentModel || (language === 'zh' ? '自动选择' : 'Auto')}
+                        </p>
+                        <p className="mt-1 text-sm text-foreground/52">
+                          {language === 'zh' ? '可在下方快速切换' : 'Switch quickly in the composer below'}
+                        </p>
+                      </div>
+                      <div className="rounded-[24px] border border-white/70 bg-white/78 px-4 py-4 shadow-[0_14px_34px_rgba(28,36,50,0.06)] dark:bg-white/5">
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-foreground/42">
+                          {language === 'zh' ? '执行状态' : 'Execution'}
+                        </p>
+                        <p className="mt-3 text-lg font-semibold tracking-[-0.03em] text-foreground">{gatewayStatusMeta.label}</p>
+                        <p className="mt-1 text-sm text-foreground/52">
+                          {language === 'zh'
+                            ? '连接现有 Gateway，继续复用会话、技能与浏览器能力'
+                            : 'Connected to the existing Gateway, sessions, skills, and browser tools'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-8">
+                    {renderComposer(true)}
+                  </div>
                 </div>
-                <h1 className="text-[42px] font-semibold tracking-[-0.03em] text-foreground">{t('chat.starter.title')}</h1>
-                <p className="mt-3 text-[17px] text-foreground/58">{t('chat.starter.subtitle')}</p>
-              </div>
 
-              {renderComposer(true)}
+                <div className="grid gap-4">
+                  <div className="rounded-[30px] border border-white/70 bg-[#192233] px-5 py-5 text-white shadow-[0_26px_60px_rgba(25,34,51,0.22)]">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-white/58">
+                      {language === 'zh' ? '工作方式' : 'Workflow'}
+                    </p>
+                    <div className="mt-4 space-y-3">
+                      <div className="rounded-[22px] border border-white/10 bg-white/6 px-4 py-3">
+                        <p className="text-sm font-semibold">{language === 'zh' ? '1. 描述目标' : '1. Describe the mission'}</p>
+                        <p className="mt-1 text-sm leading-6 text-white/68">
+                          {language === 'zh' ? '写清楚目标、约束、输出格式和完成标准。' : 'Define the goal, constraints, output shape, and acceptance bar.'}
+                        </p>
+                      </div>
+                      <div className="rounded-[22px] border border-white/10 bg-white/6 px-4 py-3">
+                        <p className="text-sm font-semibold">{language === 'zh' ? '2. 让 MaxClaw 执行' : '2. Let MaxClaw execute'}</p>
+                        <p className="mt-1 text-sm leading-6 text-white/68">
+                          {language === 'zh' ? '它会读取文件、调用工具、更新预览，并把关键进展写回线程。' : 'It reads files, calls tools, updates previews, and records progress in the thread.'}
+                        </p>
+                      </div>
+                      <div className="rounded-[22px] border border-white/10 bg-white/6 px-4 py-3">
+                        <p className="text-sm font-semibold">{language === 'zh' ? '3. 在需要时插手' : '3. Intervene only when needed'}</p>
+                        <p className="mt-1 text-sm leading-6 text-white/68">
+                          {language === 'zh' ? '登录、验证码或外部审批出现时，右侧预览与终端会保留全部上下文。' : 'If login, captcha, or manual approval appears, the preview and terminal keep the full context.'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </section>
 
-              <section className="mt-11">
+              <section className="mt-8">
                 <div className="mb-4 flex items-center justify-between">
                   <p className="text-xs font-semibold uppercase tracking-[0.22em] text-foreground/45">{t('chat.starter.templates')}</p>
                   <div className="hidden h-px flex-1 bg-white/50 md:ml-4 md:block" />
                 </div>
-                <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
                   {starterCards.map((card) => (
                     <button
                       key={card.title}
                       onClick={() => applyTemplate(card.prompt)}
-                      className="group rounded-[22px] border border-white/70 bg-white/68 px-5 py-5 text-left shadow-[0_16px_38px_rgba(36,48,67,0.05)] transition-all hover:-translate-y-0.5 hover:border-primary/22 hover:bg-white"
+                      className="group rounded-[24px] border border-white/70 bg-white/74 px-5 py-5 text-left shadow-[0_18px_42px_rgba(28,36,50,0.06)] transition-all duration-150 hover:-translate-y-1 hover:border-primary/28 hover:bg-white dark:bg-white/5"
                     >
-                      <p className="text-[17px] font-semibold tracking-[-0.02em] text-foreground">{card.title}</p>
-                      <p className="mt-1 text-sm leading-6 text-foreground/55">{card.description}</p>
+                      <p className="text-[18px] font-semibold tracking-[-0.03em] text-foreground">{card.title}</p>
+                      <p className="mt-2 text-sm leading-6 text-foreground/55">{card.description}</p>
+                      <p className="mt-5 text-[11px] font-semibold uppercase tracking-[0.2em] text-primary">
+                        {language === 'zh' ? '使用模板' : 'Use template'}
+                      </p>
                     </button>
                   ))}
                 </div>
@@ -2029,24 +2204,25 @@ export function ChatView() {
   }
 
   return (
-    <div className="h-full flex flex-col bg-card">
+    <div className="flex h-full flex-col bg-transparent">
       {renderThreadHeader()}
-      <div className="flex-1 flex min-h-0">
+      <div className="flex min-h-0 flex-1">
         <div className="min-w-0 flex flex-1 flex-col">
-          <div className="flex-1 overflow-y-auto p-6 space-y-4">
-            {messages.map((message) => (
-              <div
-                key={message.id}
-                className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-              >
-                {message.role === 'user' ? (
-                  <div className="max-w-3xl space-y-2">
+          <div className="flex-1 overflow-y-auto px-6 py-6">
+            <div className="mx-auto flex w-full max-w-[980px] flex-col gap-4">
+              {messages.map((message) => (
+                <div
+                  key={message.id}
+                  className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                >
+                  {message.role === 'user' ? (
+                    <div className="max-w-3xl space-y-2">
                     {message.attachments && message.attachments.length > 0 && (
                       <div className="flex flex-wrap gap-2">
                         {message.attachments.map((file) => (
                           <div
                             key={file.id}
-                            className="flex items-center gap-1.5 rounded-lg bg-secondary px-2.5 py-1.5 text-xs text-foreground"
+                            className="flex items-center gap-1.5 rounded-full border border-white/70 bg-white/82 px-3 py-1.5 text-xs text-foreground shadow-[0_10px_24px_rgba(28,36,50,0.06)] dark:bg-white/10"
                           >
                             <DocumentIcon className="h-3.5 w-3.5 text-foreground/60" />
                             <span className="max-w-[150px] truncate">{file.filename}</span>
@@ -2054,77 +2230,106 @@ export function ChatView() {
                         ))}
                       </div>
                     )}
-	                    <div className="group relative rounded-xl bg-primary px-4 py-3 text-sm leading-6 text-primary-foreground">
-	                      <pre className="whitespace-pre-wrap break-all font-sans selection:bg-primary-foreground/30">{message.content}</pre>
-	                      <button
+                    <div className="group relative rounded-[26px] bg-[#192233] px-5 py-4 text-sm leading-7 text-white shadow-[0_22px_48px_rgba(25,34,51,0.2)]">
+                      <pre className="whitespace-pre-wrap break-all font-sans selection:bg-primary-foreground/30">{message.content}</pre>
+                      <button
                         type="button"
                         onClick={() => {
                           void navigator.clipboard.writeText(message.content);
                           showToast('已复制到剪贴板');
                         }}
-                        className="absolute -top-2 -right-2 flex h-7 w-7 items-center justify-center rounded-full bg-card text-foreground shadow-md opacity-0 transition-opacity group-hover:opacity-100 hover:bg-secondary"
+                        className="absolute -right-2 -top-2 flex h-8 w-8 items-center justify-center rounded-full bg-white text-foreground shadow-md opacity-0 transition-opacity group-hover:opacity-100 hover:bg-secondary"
                         title="复制内容"
                       >
-	                        <CopyIcon className="h-3.5 w-3.5" />
-	                      </button>
-	                    </div>
-	                    <div className="px-1 text-right text-[11px] text-foreground/45">
-	                      {formatMessageTimestamp(message.timestamp)}
-	                    </div>
-	                  </div>
-	                ) : (
-	                  <div className="w-full px-1 py-1 text-foreground">
+                        <CopyIcon className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                    <div className="px-1 text-right text-[11px] uppercase tracking-[0.12em] text-foreground/38">
+                      {formatMessageTimestamp(message.timestamp)}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="w-full text-foreground">
                     {message.timeline && message.timeline.length > 0 && (
                       <div className="mb-3">
                         {renderTimeline(message.timeline, false)}
                       </div>
                     )}
-                    {renderMarkdownWithActions(message.content, message.id)}
-	                    <div className="mt-2 flex items-center gap-3 text-[11px] text-foreground/40">
-	                      <span>{formatMessageTimestamp(message.timestamp)}</span>
-	                      {message.durationMs !== undefined && message.durationMs > 0 && (
-	                        <>
-	                          <span aria-hidden="true">·</span>
-	                          <span className="inline-flex items-center gap-1.5">
-	                            <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-	                              <circle cx="12" cy="12" r="9" strokeWidth={1.5} />
-	                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 7v5l3 3" />
-	                            </svg>
-	                            <span>{formatDuration(message.durationMs)}</span>
-	                          </span>
-	                        </>
-	                      )}
-	                    </div>
-	                  </div>
-	                )}
-              </div>
-            ))}
-
-            {streamingTimeline.length > 0 && (
-              <div className="flex justify-start">
-                <div className="w-full px-1 py-1 text-sm leading-7 text-foreground">
-                  {renderTimeline(streamingTimeline, true)}
-                  <span className="ml-1 inline-block h-4 w-2 animate-pulse bg-primary" />
+                    <div className="rounded-[28px] border border-white/72 bg-[linear-gradient(180deg,rgba(255,255,255,0.88),rgba(248,244,238,0.82))] px-5 py-4 shadow-[0_22px_52px_rgba(28,36,50,0.06)] dark:bg-[linear-gradient(180deg,rgba(24,31,45,0.94),rgba(20,27,39,0.9))]">
+                      <div className="mb-4 flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#192233] text-xs font-semibold uppercase tracking-[0.18em] text-white">
+                          AI
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold text-foreground">MaxClaw</p>
+                          <p className="text-[11px] uppercase tracking-[0.14em] text-foreground/42">
+                            {formatMessageTimestamp(message.timestamp)}
+                          </p>
+                        </div>
+                      </div>
+                      {renderMarkdownWithActions(message.content, message.id)}
+                      <div className="mt-4 flex items-center gap-3 text-[11px] uppercase tracking-[0.12em] text-foreground/40">
+                        <span>{formatMessageTimestamp(message.timestamp)}</span>
+                        {message.durationMs !== undefined && message.durationMs > 0 && (
+                          <>
+                            <span aria-hidden="true">·</span>
+                            <span className="inline-flex items-center gap-1.5">
+                              <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <circle cx="12" cy="12" r="9" strokeWidth={1.5} />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 7v5l3 3" />
+                              </svg>
+                              <span>{formatDuration(message.durationMs)}</span>
+                            </span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
                 </div>
-              </div>
-            )}
+              ))}
 
-            <div ref={messagesEndRef} />
+              {streamingTimeline.length > 0 && (
+                <div className="flex justify-start">
+                  <div className="w-full text-sm leading-7 text-foreground">
+                    <div className="rounded-[28px] border border-white/72 bg-[linear-gradient(180deg,rgba(255,255,255,0.88),rgba(248,244,238,0.82))] px-5 py-4 shadow-[0_22px_52px_rgba(28,36,50,0.06)] dark:bg-[linear-gradient(180deg,rgba(24,31,45,0.94),rgba(20,27,39,0.9))]">
+                      <div className="mb-4 flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#192233] text-xs font-semibold uppercase tracking-[0.18em] text-white">
+                          AI
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold text-foreground">MaxClaw</p>
+                          <p className="text-[11px] uppercase tracking-[0.14em] text-foreground/42">
+                            {language === 'zh' ? '执行中' : 'Running'}
+                          </p>
+                        </div>
+                      </div>
+                      {renderTimeline(streamingTimeline, true)}
+                      <span className="ml-1 mt-4 inline-block h-4 w-2 animate-pulse bg-primary" />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div ref={messagesEndRef} />
+            </div>
           </div>
 
-          <div className="p-4 pt-3">
-            {renderComposer(false)}
-            {terminalVisible && (
-              <Suspense
-                fallback={
-                  <div className="mt-3 rounded-xl border border-border/70 bg-background/70 px-3 py-4 text-xs text-foreground/55">
-                    Loading terminal...
-                  </div>
-                }
-              >
-                <LazyTerminalPanel key={currentSessionKey} sessionKey={currentSessionKey} />
-              </Suspense>
-            )}
+          <div className="border-t border-white/60 px-6 py-5">
+            <div className="mx-auto max-w-[980px]">
+              {renderComposer(false)}
+              {terminalVisible && (
+                <Suspense
+                  fallback={
+                    <div className="mt-3 rounded-[22px] border border-border/70 bg-background/70 px-4 py-4 text-xs text-foreground/55">
+                      Loading terminal...
+                    </div>
+                  }
+                >
+                  <LazyTerminalPanel key={currentSessionKey} sessionKey={currentSessionKey} />
+                </Suspense>
+              )}
+            </div>
           </div>
         </div>
         {renderPreviewSidebar()}

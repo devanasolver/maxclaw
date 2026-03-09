@@ -347,177 +347,233 @@ export function Sidebar() {
     dispatch(setActiveTab('chat'));
   };
 
+  const statusTone =
+    status === 'running'
+      ? 'text-emerald-700 bg-emerald-500/10 border-emerald-500/20'
+      : status === 'starting'
+        ? 'text-amber-700 bg-amber-500/10 border-amber-500/20'
+        : 'text-rose-700 bg-rose-500/10 border-rose-500/20';
+  const statusLabel =
+    language === 'zh'
+      ? status === 'running'
+        ? '在线'
+        : status === 'starting'
+          ? '启动中'
+          : '离线'
+      : status === 'running'
+        ? 'Online'
+        : status === 'starting'
+          ? 'Starting'
+          : 'Offline';
+
   if (sidebarCollapsed) {
     return null;
   }
 
   return (
     <aside
-      className={`relative z-10 m-2 mr-0 flex h-[calc(100%-1rem)] w-[290px] shrink-0 flex-col overflow-hidden rounded-[28px] border border-white/65 bg-[rgba(255,255,255,0.9)] shadow-[0_18px_42px_rgba(36,48,67,0.08),inset_0_1px_0_rgba(255,255,255,0.92)] [backface-visibility:hidden] [contain:paint] [transform:translateZ(0)] ${isMac ? 'pt-10' : 'pt-3'}`}
+      className={`relative z-10 m-2 mr-0 flex h-[calc(100%-1rem)] w-[308px] shrink-0 flex-col overflow-hidden rounded-[30px] border border-white/70 bg-[linear-gradient(180deg,rgba(255,252,248,0.94),rgba(248,244,238,0.9))] shadow-[0_24px_56px_rgba(28,36,50,0.1),inset_0_1px_0_rgba(255,255,255,0.92)] [backface-visibility:hidden] [contain:paint] [transform:translateZ(0)] dark:bg-[linear-gradient(180deg,rgba(24,31,45,0.92),rgba(20,27,39,0.9))] ${isMac ? 'pt-10' : 'pt-3'}`}
     >
-      <div className="px-4 pb-2">
-        <button
-          onClick={handleNewTask}
-          className="flex w-full items-center justify-center gap-2 rounded-2xl border border-primary/20 bg-primary/10 px-4 py-3 text-primary shadow-[0_10px_30px_rgba(111,143,125,0.12)] transition-colors hover:bg-primary/14"
-        >
-          <EditIcon className="w-5 h-5 flex-shrink-0" />
-          <span className="font-medium">{t('sidebar.newTask')}</span>
-        </button>
+      <div className="px-4 pb-3">
+        <div className="rounded-[26px] border border-white/70 bg-[#192233] px-4 py-4 text-white shadow-[0_20px_44px_rgba(25,34,51,0.24)]">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-white/58">Desktop Agent</p>
+              <h2 className="mt-2 text-[22px] font-semibold tracking-[-0.04em]">MaxClaw</h2>
+            </div>
+            <div className={`inline-flex items-center gap-2 rounded-full border px-2.5 py-1 text-[11px] font-medium ${statusTone}`}>
+              <span className={`status-dot ${status}`} />
+              {statusLabel}
+            </div>
+          </div>
+          <p className="mt-3 text-sm leading-6 text-white/72">
+            {language === 'zh'
+              ? '像 Codex 一样处理代码、文件和自动化任务，但保留你现有的 Gateway 与会话能力。'
+              : 'A desktop control room for code, files, and automations on top of the existing Gateway.'}
+          </p>
+          <button
+            onClick={handleNewTask}
+            className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-[#192233] shadow-[0_14px_36px_rgba(10,18,31,0.28)] transition-transform duration-150 hover:-translate-y-0.5"
+          >
+            <EditIcon className="h-5 w-5 flex-shrink-0" />
+            <span>{t('sidebar.newTask')}</span>
+          </button>
+        </div>
       </div>
 
-      {/* Menu Items */}
       <nav className="sidebar-scroll min-h-0 flex-1 overflow-y-auto px-3 pb-4 [transform:translateZ(0)]">
-        {menuItems.map((item) => {
-          const Icon = item.icon;
-          const isActive = activeTab === item.id;
-          const showFailedBadge = item.id === 'scheduled' && hasFailedCronJobs && !isActive;
+        <div className="mb-5 grid grid-cols-2 gap-2 px-1">
+          <div className="rounded-2xl border border-white/70 bg-white/70 px-3 py-3 shadow-[0_12px_28px_rgba(28,36,50,0.06)] dark:bg-white/5">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-foreground/42">
+              {language === 'zh' ? '任务' : 'Threads'}
+            </p>
+            <p className="mt-2 text-2xl font-semibold tracking-[-0.05em] text-foreground">{mergedSessions.length}</p>
+          </div>
+          <div className="rounded-2xl border border-white/70 bg-white/70 px-3 py-3 shadow-[0_12px_28px_rgba(28,36,50,0.06)] dark:bg-white/5">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-foreground/42">
+              {language === 'zh' ? '当前渠道' : 'Channel'}
+            </p>
+            <p className="mt-2 truncate text-sm font-semibold text-foreground">
+              {getChannelLabel(normalizeChannelKey(channelFilter), language)}
+            </p>
+          </div>
+        </div>
 
-          return (
-            <button
-              key={item.id}
-              onClick={() => dispatch(setActiveTab(item.id))}
-              className={`group mb-1 flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-left transition-all duration-200 ${
-                isActive
-                  ? 'bg-white font-medium text-foreground shadow-[0_14px_30px_rgba(36,48,67,0.08)]'
-                  : 'text-secondary-foreground hover:bg-white/65 hover:text-foreground'
-              }`}
-            >
-              <div className="relative">
-                <Icon className="w-5 h-5 flex-shrink-0 transition-transform duration-200 group-hover:scale-110" />
-                {showFailedBadge && (
-                  <span
-                    className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-red-500 border-2"
-                    style={{ borderColor: isActive ? 'var(--active)' : 'var(--secondary)' }}
-                    title={language === 'zh' ? '有任务执行失败' : 'Some tasks have failed'}
-                  />
-                )}
-              </div>
-              <span>{t(item.labelKey)}</span>
-            </button>
-          );
-        })}
+        <div className="rounded-[24px] border border-white/70 bg-white/52 p-2 shadow-[0_16px_36px_rgba(28,36,50,0.05)] dark:bg-white/5">
+          {menuItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = activeTab === item.id;
+            const showFailedBadge = item.id === 'scheduled' && hasFailedCronJobs && !isActive;
+
+            return (
+              <button
+                key={item.id}
+                onClick={() => dispatch(setActiveTab(item.id))}
+                className={`group mb-1 flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-left transition-all duration-200 ${
+                  isActive
+                    ? 'bg-[#192233] font-medium text-white shadow-[0_16px_34px_rgba(25,34,51,0.2)]'
+                    : 'text-secondary-foreground hover:bg-white/72 hover:text-foreground dark:hover:bg-white/10'
+                }`}
+              >
+                <div className="relative">
+                  <Icon className="h-5 w-5 flex-shrink-0 transition-transform duration-200 group-hover:scale-110" />
+                  {showFailedBadge && (
+                    <span
+                      className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-white/80"
+                      title={language === 'zh' ? '有任务执行失败' : 'Some tasks have failed'}
+                    />
+                  )}
+                </div>
+                <span>{t(item.labelKey)}</span>
+              </button>
+            );
+          })}
+        </div>
 
         <div className="mt-5 px-2">
-            <p className="mb-3 px-2 text-[11px] font-semibold uppercase tracking-[0.18em]" style={{ color: 'var(--muted)' }}>
+          <div className="mb-3 flex items-center justify-between gap-3 px-2">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em]" style={{ color: 'var(--muted)' }}>
               {t('sidebar.history')}
             </p>
+            <span className="rounded-full border border-white/65 bg-white/65 px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.18em] text-foreground/45 dark:bg-white/5">
+              {sessionItems.length}
+            </span>
+          </div>
 
-            {/* Channel Filter Dropdown */}
-            <div className="relative mb-3">
-              <CustomSelect
-                value={channelFilter}
-                onChange={(value) => {
-                  setChannelFilter(normalizeChannelKey(value));
-                  setOpenMenuKey(null);
-                }}
-                options={channelOptions.map((channel) => ({
-                  value: channel,
-                  label: getChannelLabel(channel, language)
-                }))}
-                size="md"
-              />
-            </div>
+          <div className="relative mb-3">
+            <CustomSelect
+              value={channelFilter}
+              onChange={(value) => {
+                setChannelFilter(normalizeChannelKey(value));
+                setOpenMenuKey(null);
+              }}
+              options={channelOptions.map((channel) => ({
+                value: channel,
+                label: getChannelLabel(channel, language)
+              }))}
+              size="md"
+              triggerClassName="rounded-2xl border-white/70 bg-white/75 shadow-[0_12px_28px_rgba(28,36,50,0.05)] dark:bg-white/10"
+              menuClassName="border-white/70 bg-white/95 dark:bg-[#151d2b]"
+            />
+          </div>
 
-            {/* Session List */}
-            <div className="mt-3 space-y-1.5">
-              {sessionItems.length === 0 && (
-                <div className="text-sm px-3 py-2 rounded-xl" style={{ color: 'var(--muted)' }}>
-                  {t('sidebar.empty')}
-                </div>
-              )}
+          <div className="mt-3 space-y-1.5">
+            {sessionItems.length === 0 && (
+              <div className="rounded-2xl border border-dashed border-white/70 px-3 py-4 text-sm text-foreground/50 dark:border-white/10">
+                {t('sidebar.empty')}
+              </div>
+            )}
 
-              {sessionItems.map((session) => {
+            {sessionItems.map((session) => {
               const isCurrent = session.key === currentSessionKey;
               const isEditing = editingSession === session.key;
               const isMenuOpen = openMenuKey === session.key;
               const preview = getSessionPreview(session);
 
-                if (isEditing) {
-                  return (
-                    <div key={session.key} className="rounded-2xl bg-white px-3 py-3 shadow-[0_10px_24px_rgba(36,48,67,0.06)]">
-                      <input
-                        type="text"
-                        value={editTitle}
-                        onChange={(e) => setEditTitle(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') handleRename();
-                          if (e.key === 'Escape') setEditingSession(null);
-                        }}
-                        onBlur={handleRename}
-                        autoFocus
-                        className="w-full text-sm font-medium bg-transparent border-0 border-b focus:outline-none focus:ring-0 pb-1"
-                        style={{
-                          borderColor: 'var(--primary)',
-                          color: 'var(--foreground)'
-                        }}
-                      />
-                      <p className="text-xs mt-1.5" style={{ color: 'var(--muted)' }}>
-                        Enter to confirm, Esc to cancel
-                      </p>
-                    </div>
-                  );
-                }
-
+              if (isEditing) {
                 return (
-                  <div
-                    key={session.key}
-                    className={`group relative flex cursor-pointer items-center gap-1 rounded-2xl px-3 py-3 transition-colors duration-150 ${
-                      isCurrent
-                        ? 'bg-white shadow-[0_14px_28px_rgba(36,48,67,0.07)]'
-                        : isMenuOpen
-                          ? 'bg-white/65'
-                          : 'hover:bg-white/55'
-                    }`}
-                  >
-                    <button
-                      onClick={() => {
-                        dispatch(setCurrentSessionKey(session.key));
-                        dispatch(setActiveTab('chat'));
+                  <div key={session.key} className="rounded-[22px] border border-white/70 bg-white px-3 py-3 shadow-[0_12px_28px_rgba(28,36,50,0.08)] dark:bg-white/10">
+                    <input
+                      type="text"
+                      value={editTitle}
+                      onChange={(e) => setEditTitle(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') handleRename();
+                        if (e.key === 'Escape') setEditingSession(null);
                       }}
-                      className="flex-1 text-left min-w-0"
+                      onBlur={handleRename}
+                      autoFocus
+                      className="w-full border-0 border-b bg-transparent pb-1 text-sm font-medium focus:outline-none focus:ring-0"
+                      style={{
+                        borderColor: 'var(--primary)',
+                        color: 'var(--foreground)'
+                      }}
+                    />
+                    <p className="mt-1.5 text-xs" style={{ color: 'var(--muted)' }}>
+                      Enter to confirm, Esc to cancel
+                    </p>
+                  </div>
+                );
+              }
+
+              return (
+                <div
+                  key={session.key}
+                  className={`group relative flex cursor-pointer items-center gap-1 rounded-[22px] border px-3 py-3 transition-colors duration-150 ${
+                    isCurrent
+                      ? 'border-[#192233]/10 bg-[#192233] text-white shadow-[0_18px_40px_rgba(25,34,51,0.16)]'
+                      : isMenuOpen
+                        ? 'border-white/70 bg-white/78 dark:bg-white/10'
+                        : 'border-transparent hover:border-white/70 hover:bg-white/60 dark:hover:bg-white/8'
+                  }`}
+                >
+                  <button
+                    onClick={() => {
+                      dispatch(setCurrentSessionKey(session.key));
+                      dispatch(setActiveTab('chat'));
+                    }}
+                    className="min-w-0 flex-1 text-left"
+                  >
+                    <p className={`truncate text-[14px] font-medium leading-5 ${isCurrent ? 'text-white' : 'text-foreground'}`}>
+                      {getSessionDisplayTitle(session)}
+                    </p>
+                    {preview && (
+                      <p className={`truncate text-[11px] leading-4 ${isCurrent ? 'text-white/65' : 'text-foreground/50'}`}>
+                        {preview}
+                      </p>
+                    )}
+                    <p className={`mt-1 text-[11px] leading-5 ${isCurrent ? 'text-white/55' : 'text-foreground/45'}`}>
+                      {getChannelLabel(extractSessionChannel(session.key), language)} · {formatRelativeTime(session.lastMessageAt)}
+                    </p>
+                  </button>
+
+                  <div className="relative" ref={isMenuOpen ? menuRef : undefined}>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setOpenMenuKey(isMenuOpen ? null : session.key);
+                      }}
+                      className={`rounded-xl p-1.5 transition-opacity duration-150 ${
+                        isMenuOpen ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                      }`}
+                      style={{
+                        background: isMenuOpen ? 'var(--hover)' : 'transparent'
+                      }}
                     >
-                      <p className="truncate text-[14px] font-medium leading-5" style={{ color: 'var(--foreground)' }}>
-                        {getSessionDisplayTitle(session)}
-                      </p>
-                      {preview && (
-                        <p className="truncate text-[11px] leading-4" style={{ color: 'var(--muted)' }}>
-                          {preview}
-                        </p>
-                      )}
-                      <p className="mt-0.5 text-[11px] leading-5" style={{ color: 'var(--muted)' }}>
-                        {getChannelLabel(extractSessionChannel(session.key), language)} · {formatRelativeTime(session.lastMessageAt)}
-                      </p>
+                      <DotsIcon className="h-4 w-4" style={{ color: isCurrent ? 'rgba(255,255,255,0.72)' : 'var(--muted)' }} />
                     </button>
 
-                    {/* Menu Button */}
-                    <div className="relative" ref={isMenuOpen ? menuRef : undefined}>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setOpenMenuKey(isMenuOpen ? null : session.key);
-                        }}
-                        className={`rounded-xl p-1.5 transition-opacity duration-150 ${
-                          isMenuOpen ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
-                        }`}
-                        style={{
-                          background: isMenuOpen ? 'var(--hover)' : 'transparent'
-                        }}
+                    {isMenuOpen && (
+                      <div
+                        className="absolute right-10 top-1/2 z-50 w-36 -translate-y-1/2 rounded-2xl border border-white/70 bg-white py-1 shadow-[0_18px_40px_rgba(36,48,67,0.14)] dark:bg-[#151d2b]"
+                        onClick={(e) => e.stopPropagation()}
                       >
-                        <DotsIcon className="w-4 h-4" style={{ color: 'var(--muted)' }} />
-                      </button>
-
-                      {/* Dropdown Menu */}
-                      {isMenuOpen && (
-                        <div
-                          className="absolute right-10 top-1/2 z-50 w-36 -translate-y-1/2 rounded-2xl border border-white/70 bg-white py-1 shadow-[0_18px_40px_rgba(36,48,67,0.14)]"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleStartRename(session);
-                            }}
-                            className="mx-1 flex w-[calc(100%-8px)] items-center gap-2 rounded-lg px-3 py-2 text-left text-sm transition-colors duration-150"
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleStartRename(session);
+                          }}
+                          className="mx-1 flex w-[calc(100%-8px)] items-center gap-2 rounded-lg px-3 py-2 text-left text-sm transition-colors duration-150"
                             style={{ color: 'var(--foreground)' }}
                             onMouseEnter={(e) => {
                               e.currentTarget.style.background = 'var(--hover)';

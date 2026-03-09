@@ -4,6 +4,10 @@
 
 ### Added
 
+- **MaxClaw 桌面 GUI 重做为 Codex 风格工作台**：重塑 Electron 壳层、左侧控制栏与聊天线程视图，引入新的桌面级视觉系统、本地字体资源和更强的启动页/消息编排，让 MaxClaw 以更接近 Codex Desktop 的控制台体验承载现有 Gateway 会话流
+  - `electron/src/renderer/App.tsx`、`electron/src/renderer/components/Sidebar.tsx`、`electron/src/renderer/views/ChatView.tsx`、`electron/src/renderer/styles/globals.css`、`electron/public/fonts/*`
+  - 验证：`cd electron && npm run build`、`make build`
+
 - **会话独立标题与自动命名**：新增 `Session.Title` / `TitleSource` / `TitleState` 元数据，自动根据用户消息生成任务标题，历史会话在列表读取时懒补标题，手动重命名不再覆写最后一条消息正文
   - `internal/session/manager.go`、`internal/session/title.go`、`internal/session/title_test.go`、`internal/webui/server.go`、`internal/webui/server_test.go`、`electron/src/renderer/hooks/useGateway.ts`、`electron/src/renderer/components/Sidebar.tsx`、`electron/src/renderer/views/SessionsView.tsx`、`README.md`、`README.zh.md`、`ARCHITECTURE.md`
   - 验证：`go test ./internal/session ./internal/webui`、`cd electron && npm run build`、`make build`
