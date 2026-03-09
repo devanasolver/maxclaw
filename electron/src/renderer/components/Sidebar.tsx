@@ -386,14 +386,9 @@ export function Sidebar() {
               {statusLabel}
             </div>
           </div>
-          <p className="mt-3 text-sm leading-6 text-white/72">
-            {language === 'zh'
-              ? '像 Codex 一样处理代码、文件和自动化任务，但保留你现有的 Gateway 与会话能力。'
-              : 'A desktop control room for code, files, and automations on top of the existing Gateway.'}
-          </p>
           <button
             onClick={handleNewTask}
-            className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-[#192233] shadow-[0_14px_36px_rgba(10,18,31,0.28)] transition-transform duration-150 hover:-translate-y-0.5"
+            className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-[#192233] shadow-[0_14px_36px_rgba(10,18,31,0.28)] transition-transform duration-150 hover:-translate-y-0.5"
           >
             <EditIcon className="h-5 w-5 flex-shrink-0" />
             <span>{t('sidebar.newTask')}</span>
