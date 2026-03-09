@@ -9,10 +9,7 @@ export default defineConfig({
   publicDir: 'public',
   build: {
     outDir: 'dist/renderer',
-    emptyOutDir: true,
-    rollupOptions: {
-      input: path.resolve(__dirname, 'index.html')
-    }
+    emptyOutDir: true
   },
   resolve: {
     alias: {

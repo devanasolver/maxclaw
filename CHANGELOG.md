@@ -32,6 +32,10 @@
 
 ### Fixed
 
+- **Electron renderer 构建路径兼容性修复**：移除 `vite.renderer.config.ts` 中多余的显式 HTML `input` 配置，避免在更严格的 Vite/Rollup 组合下把 `../index.html` 解析为非法输出名，导致桌面前端构建失败
+  - `electron/vite.renderer.config.ts`
+  - 验证：`cd electron && npm run build`、`make build`
+
 - **模型级多模态能力改为配置驱动**：新增 `providers.<name>.models[].supportsImageInput`，Provider 运行时优先读取显式模型能力，设置页新增 `Multimodal` 开关，Agent 不再按模型名提前短路 QQ/Telegram 纯图片消息；未声明时仍保留启发式回退
   - `internal/config/schema.go`、`internal/config/schema_test.go`、`internal/providers/base.go`、`internal/providers/openai.go`、`internal/providers/openai_test.go`、`internal/agent/loop.go`、`internal/agent/loop_test.go`、`internal/cli/agent.go`、`internal/cli/cron.go`、`internal/cli/gateway.go`、`internal/webui/server.go`、`electron/src/renderer/types/providers.ts`、`electron/src/renderer/components/ProviderEditor.tsx`、`electron/src/renderer/views/SettingsView.tsx`、`ARCHITECTURE.md`
   - 验证：`go test ./internal/config ./internal/providers ./internal/agent ./internal/cli ./internal/webui`、`cd electron && npm run build`、`make build`
