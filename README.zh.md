@@ -106,7 +106,7 @@ make build && make restart-daemon && make electron-start
 
 ### 标准流程
 
-1. 安装依赖：Go 1.21+，Node.js 18+
+1. 安装依赖：Go 1.24+，Node.js 18+
 2. 构建：`make build`
 3. 初始化：`./build/maxclaw onboard`
 4. 配置：编辑 `~/.maxclaw/config.json`
@@ -588,7 +588,7 @@ make down-daemon
 - Structured logs in `~/.maxclaw/logs`
 
 ## Quick Start
-1. Install Go 1.21+ and Node.js 18+
+1. Install Go 1.24+ and Node.js 18+
 2. Build: `make build`
 3. Init: `./build/maxclaw onboard`
 4. Configure: edit `~/.maxclaw/config.json`

@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **maxclaw** is an ultra-lightweight personal AI assistant framework written in Go (~3,500 lines of core code). It provides core agent functionality including tool use, multi-channel chat integrations, and scheduled tasks.
 
-- **Language**: Go 1.21+
+- **Language**: Go 1.24+
 - **Module**: `github.com/Lichas/maxclaw`
 - **Entry point**: `cmd/maxclaw/main.go`
 - **Binary name**: `maxclaw`

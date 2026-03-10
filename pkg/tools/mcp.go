@@ -234,13 +234,13 @@ func (c *MCPConnector) Connect(ctx context.Context, registry *Registry) error {
 	}
 
 	c.mu.Lock()
-	c.clients = nextClients
-	c.registered = registered
-	if len(errs) > 0 {
-		c.lastConnectErr = fmt.Errorf(strings.Join(errs, "; "))
-	} else {
-		c.lastConnectErr = nil
-	}
+		c.clients = nextClients
+		c.registered = registered
+		if len(errs) > 0 {
+			c.lastConnectErr = errors.New(strings.Join(errs, "; "))
+		} else {
+			c.lastConnectErr = nil
+		}
 	c.mu.Unlock()
 
 	return c.lastConnectErr

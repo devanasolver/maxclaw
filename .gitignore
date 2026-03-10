@@ -7,6 +7,7 @@
 # Logs and runtime state
 /.logs/
 /.pids/
+/internal/cron/cron_history.json
 *.log
 
 # Node / frontend

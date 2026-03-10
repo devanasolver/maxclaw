@@ -2,7 +2,7 @@
 
 > A 24/7 local AI work assistant built with Go. Gateway, sessions, memory, and tool execution stay on your machine.
 
-[![Go Version](https://img.shields.io/badge/Go-1.21%2B-blue)](https://golang.org)
+[![Go Version](https://img.shields.io/badge/Go-1.24%2B-blue)](https://golang.org)
 [![License](https://img.shields.io/badge/License-Apache--2.0-green)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-macOS%20%7C%20Windows%20%7C%20Linux-lightgrey)]()
 
@@ -51,7 +51,7 @@ If you are familiar with OpenClaw, maxclaw follows similar local-first principle
 
 ## Quick Start
 
-1. Install Go 1.21+ and Node.js 18+
+1. Install Go 1.24+ and Node.js 18+
 2. Build: `make build`
 3. Initialize workspace: `./build/maxclaw onboard`
 4. Configure: edit `~/.maxclaw/config.json`

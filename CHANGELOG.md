@@ -2,6 +2,16 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- **Go 1.24 基线统一并补齐兼容性修复**：将 `go.mod`、Docker builder、桌面 CI 和开发文档统一到 Go 1.24，执行 `go mod tidy` 清理过期间接依赖，并修复 Go 1.24 下 `pkg/tools/mcp.go` 的错误聚合写法，避免 `go test ./...` 因可疑格式串失败
+  - `go.mod`, `go.sum`, `Dockerfile`, `.github/workflows/build-desktop.yml`, `README.md`, `README.zh.md`, `CLAUDE.md`, `pkg/tools/mcp.go`
+  - 验证：`go test ./...`、`make build`
+
+- **Cron 运行历史文件改为忽略运行态产物**：将 `internal/cron/cron_history.json` 从 Git 跟踪中移除，并加入 `.gitignore`，避免测试或本地运行把运行时历史污染到工作区
+  - `.gitignore`, `internal/cron/cron_history.json`
+  - 验证：`go test ./...`、`make build`
+
 ### Added
 
 - **技能市场新增 ClawHub 兼容层**：新增 ClawHub skill slug / 技能页 URL / API URL 解析与官方 registry 下载解压，桌面端技能市场改为从后端拉取统一推荐源，并支持直接安装 ClawHub 技能
