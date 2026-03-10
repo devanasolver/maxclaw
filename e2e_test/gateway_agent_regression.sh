@@ -131,6 +131,7 @@ if [ ! -x "$BUILD_DIR/maxclaw-gateway" ]; then
 fi
 
 export HOME="$TEST_HOME"
+mkdir -p "$TEST_HOME/.maxclaw"
 echo "y" | "$BUILD_DIR/maxclaw" onboard >/dev/null 2>&1
 
 PROVIDER_PORT="$(find_free_port)"
@@ -187,7 +188,39 @@ else
     fail "Unexpected basic response: $response"
 fi
 
-echo "Test 2: write_file tool flow"
+echo "Test 2: arithmetic reasoning"
+response="$(post_message "webui:e2e-reasoning" "Compute 17 + 28. Reply with only the number." | json_field response)"
+if [ "$response" = "45" ]; then
+    pass "Gateway handles one-step arithmetic reasoning"
+else
+    fail "Unexpected arithmetic response: $response"
+fi
+
+echo "Test 3: multi-step arithmetic reasoning"
+response="$(post_message "webui:e2e-reasoning" "Compute (12 * 3) - 5. Reply with only the number." | json_field response)"
+if [ "$response" = "31" ]; then
+    pass "Gateway handles multi-step arithmetic reasoning"
+else
+    fail "Unexpected multi-step arithmetic response: $response"
+fi
+
+echo "Test 4: simple logic reasoning"
+response="$(post_message "webui:e2e-reasoning" "If all bloops are razzies and all razzies are green, are all bloops green? Reply with only YES or NO." | json_field response)"
+if [ "$response" = "YES" ]; then
+    pass "Gateway handles simple syllogistic reasoning"
+else
+    fail "Unexpected logic response: $response"
+fi
+
+echo "Test 5: deterministic text counting"
+response="$(post_message "webui:e2e-reasoning" 'How many letters are in the word "banana"? Reply with only the number.' | json_field response)"
+if [ "$response" = "6" ]; then
+    pass "Gateway handles deterministic counting"
+else
+    fail "Unexpected counting response: $response"
+fi
+
+echo "Test 6: write_file tool flow"
 response="$(post_message "webui:e2e-file" "Use write_file to create note.txt with content hello-from-e2e. After the tool succeeds, reply with exactly DONE_WRITE." | json_field response)"
 if [ "$response" != "DONE_WRITE" ]; then
     fail "Unexpected write_file response: $response"
@@ -202,7 +235,7 @@ if [ "$(cat "$session_file")" != "hello-from-e2e" ]; then
 fi
 pass "Gateway executed write_file and persisted output in session workspace"
 
-echo "Test 3: read_file tool flow"
+echo "Test 7: read_file tool flow"
 response="$(post_message "webui:e2e-file" "Use read_file to read note.txt. If the content is hello-from-e2e, reply with exactly READ_OK." | json_field response)"
 if [ "$response" = "READ_OK" ]; then
     pass "Gateway executed read_file and returned final answer"
@@ -210,7 +243,7 @@ else
     fail "Unexpected read_file response: $response"
 fi
 
-echo "Test 4: multi-turn session memory"
+echo "Test 8: multi-turn session memory"
 response="$(post_message "webui:e2e-memory" "Remember that my codename is ORANGE_E2E." | json_field response)"
 if [ "$response" != "ACK_ORANGE" ]; then
     fail "Unexpected memory ack response: $response"
@@ -220,6 +253,18 @@ if [ "$response" = "ORANGE_E2E" ]; then
     pass "Gateway preserved session context across requests"
 else
     fail "Unexpected memory recall response: $response"
+fi
+
+echo "Test 9: memory plus arithmetic reasoning"
+response="$(post_message "webui:e2e-memory-math" "Remember this: my number is 14. Reply with only OK." | json_field response)"
+if [ "$response" != "OK" ]; then
+    fail "Unexpected memory math ack response: $response"
+fi
+response="$(post_message "webui:e2e-memory-math" "Add 6 to my number. Reply with only the number." | json_field response)"
+if [ "$response" = "20" ]; then
+    pass "Gateway combines session memory with basic arithmetic reasoning"
+else
+    fail "Unexpected memory math response: $response"
 fi
 
 echo ""

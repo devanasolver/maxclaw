@@ -33,27 +33,6 @@ def json_response(model, message, finish_reason="stop"):
     }
 
 
-def tool_call_response(model, tool_call_id, name, arguments):
-    return json_response(
-        model,
-        {
-            "role": "assistant",
-            "content": "",
-            "tool_calls": [
-                {
-                    "id": tool_call_id,
-                    "type": "function",
-                    "function": {
-                        "name": name,
-                        "arguments": json.dumps(arguments, ensure_ascii=True),
-                    },
-                }
-            ],
-        },
-        finish_reason="tool_calls",
-    )
-
-
 class Handler(BaseHTTPRequestHandler):
     server_version = "FakeOpenAIServer/1.0"
 
@@ -95,6 +74,22 @@ class Handler(BaseHTTPRequestHandler):
 
         if "Reply with exactly E2E_PONG." in last_text:
             self.send_chat_response(body, model, {"role": "assistant", "content": "E2E_PONG"})
+            return
+
+        if "Compute 17 + 28. Reply with only the number." in last_text:
+            self.send_chat_response(body, model, {"role": "assistant", "content": "45"})
+            return
+
+        if "Compute (12 * 3) - 5. Reply with only the number." in last_text:
+            self.send_chat_response(body, model, {"role": "assistant", "content": "31"})
+            return
+
+        if 'How many letters are in the word "banana"? Reply with only the number.' in last_text:
+            self.send_chat_response(body, model, {"role": "assistant", "content": "6"})
+            return
+
+        if "If all bloops are razzies and all razzies are green, are all bloops green? Reply with only YES or NO." in last_text:
+            self.send_chat_response(body, model, {"role": "assistant", "content": "YES"})
             return
 
         if "Use write_file to create note.txt with content hello-from-e2e." in last_text:
@@ -143,6 +138,16 @@ class Handler(BaseHTTPRequestHandler):
         if "What is my codename? Reply with exactly ORANGE_E2E." in last_text:
             remembered = any("Remember that my codename is ORANGE_E2E." in text for text in user_texts[:-1])
             content = "ORANGE_E2E" if remembered else "UNKNOWN"
+            self.send_chat_response(body, model, {"role": "assistant", "content": content})
+            return
+
+        if "Remember this: my number is 14. Reply with only OK." in last_text:
+            self.send_chat_response(body, model, {"role": "assistant", "content": "OK"})
+            return
+
+        if "Add 6 to my number. Reply with only the number." in last_text:
+            remembered = any("Remember this: my number is 14. Reply with only OK." in text for text in user_texts[:-1])
+            content = "20" if remembered else "UNKNOWN"
             self.send_chat_response(body, model, {"role": "assistant", "content": content})
             return
 

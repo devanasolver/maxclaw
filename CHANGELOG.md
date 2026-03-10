@@ -12,6 +12,10 @@
   - `e2e_test/fake_openai_server.py`、`e2e_test/gateway_agent_regression.sh`、`e2e_test/run.sh`、`e2e_test/README.md`
   - 验证：`bash e2e_test/gateway_agent_regression.sh`、`bash e2e_test/run.sh`、`make build`
 
+- **Gateway Agent E2E 补充基础逻辑推理场景**：在本地 fake provider 回归里新增严格格式输出的算术、计数、简单条件推理，以及“记忆 + 算术”组合场景，避免回归只测固定字符串回显
+  - `e2e_test/fake_openai_server.py`、`e2e_test/gateway_agent_regression.sh`、`e2e_test/README.md`
+  - 验证：`bash e2e_test/gateway_agent_regression.sh`、`bash e2e_test/run.sh`、`make build`
+
 ### Fixed
 
 - **Go 1.24 基线统一并补齐兼容性修复**：将 `go.mod`、Docker builder、桌面 CI 和开发文档统一到 Go 1.24，执行 `go mod tidy` 清理过期间接依赖，并修复 Go 1.24 下 `pkg/tools/mcp.go` 的错误聚合写法，避免 `go test ./...` 因可疑格式串失败

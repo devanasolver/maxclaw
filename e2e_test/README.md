@@ -65,9 +65,11 @@ fi
 脚本会验证：
 
 - `/api/message` 基础文本请求成功
+- 严格格式输出的基础逻辑推理（算术、计数、简单条件推理）
 - agent 通过 `write_file` 在当前 session 目录创建文件
 - agent 通过 `read_file` 读取刚刚写入的文件
 - 同一 `sessionKey` 的第二轮请求能看到第一轮上下文
+- 会话记忆和基础算术能组合生效
 
 ## 智能插话功能测试 (Smart Interruption Testing)
 
