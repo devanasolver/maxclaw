@@ -26,6 +26,10 @@
 
 ### Fixed
 
+- **聊天输入框顶部高光线外溢修复**：将 `Thread Composer` 顶部装饰白线放入圆角裁切层，避免 composer 保持 `overflow-visible` 时白线从左右上角露出
+  - `electron/src/renderer/views/ChatView.tsx`
+  - 验证：`bash e2e_test/run.sh`、`cd electron && npm run build`、`make build`
+
 - **Go 1.24 基线统一并补齐兼容性修复**：将 `go.mod`、Docker builder、桌面 CI 和开发文档统一到 Go 1.24，执行 `go mod tidy` 清理过期间接依赖，并修复 Go 1.24 下 `pkg/tools/mcp.go` 的错误聚合写法，避免 `go test ./...` 因可疑格式串失败
   - `go.mod`, `go.sum`, `Dockerfile`, `.github/workflows/build-desktop.yml`, `README.md`, `README.zh.md`, `CLAUDE.md`, `pkg/tools/mcp.go`
   - 验证：`go test ./...`、`make build`

@@ -1748,7 +1748,9 @@ export function ChatView() {
         landing ? 'p-6' : 'p-5'
       }`}
     >
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-white/90" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-8 overflow-hidden rounded-t-[30px]">
+        <div className="h-px bg-white/90" />
+      </div>
       <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-foreground/42">
