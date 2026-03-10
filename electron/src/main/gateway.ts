@@ -52,7 +52,10 @@ export class GatewayManager {
     }
 
     return new Promise((resolve, reject) => {
-      this.process = spawn(binaryPath, ['gateway', '-p', '18890'], {
+      const launchArgs = this.getLaunchArgs(binaryPath);
+      log.info('Launching gateway binary:', binaryPath, launchArgs.join(' '));
+
+      this.process = spawn(binaryPath, launchArgs, {
         stdio: ['ignore', 'pipe', 'pipe'],
         env: {
           ...process.env,
@@ -245,6 +248,15 @@ export class GatewayManager {
 
     log.warn('Gateway binary was not found in expected locations:', candidates);
     return candidates[0];
+  }
+
+  private getLaunchArgs(binaryPath: string): string[] {
+    const binaryName = path.basename(binaryPath).toLowerCase();
+    if (binaryName.includes('gateway')) {
+      return ['maxclaw-gateway', '-p', '18890'];
+    }
+
+    return ['gateway', '-p', '18890'];
   }
 
   private getConfigPath(): string {

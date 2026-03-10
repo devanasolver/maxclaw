@@ -40,6 +40,10 @@
 
 ### Fixed
 
+- **Electron 开发白屏与内置 Gateway 启动异常修复**：桌面开发启动改为等待 `dist/main` 与 `dist/renderer/index.html` 产物就绪后再拉起 Electron，避免 `loadFile` 抢跑导致白屏；同时按二进制类型正确选择 Gateway 启动参数，修复桌面端误用命令导致内置 Gateway 起不来的问题
+  - `electron/package.json`、`electron/src/main/gateway.ts`
+  - 验证：`mv electron/dist electron/dist.prewait-backup && cd electron && npm run dev`、`cd electron && npm run build`、`make build`
+
 - **桌面窗口外层底板移除**：移除 Electron renderer 里额外的外边距、内嵌底板和装饰发光层，让主界面直接贴合窗口边界，不再出现“APP 外还有一层底”的视觉
   - `electron/src/renderer/App.tsx`、`electron/src/renderer/styles/globals.css`
   - 验证：`cd electron && npm run build`、`make build`

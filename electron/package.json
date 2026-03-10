@@ -11,7 +11,7 @@
     "dev:main": "vite build --config vite.main.config.ts --watch",
     "dev:preload": "vite build --config vite.preload.config.ts --watch",
     "dev:renderer": "vite build --config vite.renderer.config.ts --watch",
-    "electron:start": "npm run ensure:electron && sleep 1 && electron .",
+    "electron:start": "npm run ensure:electron && wait-on file:dist/main/index.cjs file:dist/main/preload.cjs file:dist/renderer/index.html && electron .",
     "start": "npm run build && npm run ensure:electron && electron .",
     "build": "npm run build:main && npm run build:preload && npm run build:renderer",
     "build:main": "vite build --config vite.main.config.ts",
