@@ -104,6 +104,7 @@ func (s *Server) Start(ctx context.Context, host string, port int) error {
 	mux.HandleFunc("/api/sessions", s.handleSessions)
 	mux.HandleFunc("/api/sessions/", s.handleSessionByKey)
 	mux.HandleFunc("/api/skills", s.handleSkills)
+	mux.HandleFunc("/api/skills/sources", s.handleSkillSources)
 	mux.HandleFunc("/api/skills/", s.handleSkillsPath)
 	mux.HandleFunc("/api/skills/install", s.handleSkillsInstall)
 	mux.HandleFunc("/api/message", s.handleMessage)
@@ -682,6 +683,17 @@ func (s *Server) handleSkills(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+func (s *Server) handleSkillSources(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+
+	writeJSON(w, map[string]interface{}{
+		"sources": workspaceSkills.RecommendedSources(),
+	})
+}
+
 func (s *Server) handleSkillsPath(w http.ResponseWriter, r *http.Request) {
 	path := strings.TrimPrefix(r.URL.Path, "/api/skills/")
 	parts := strings.Split(path, "/")
@@ -753,6 +765,8 @@ func (s *Server) handleSkillsInstall(w http.ResponseWriter, r *http.Request) {
 	switch req.Type {
 	case "github":
 		result, err = s.installSkillFromGitHub(skillsDir, req.Source)
+	case "clawhub":
+		result, err = s.installSkillFromClawHub(req.Source)
 	case "zip":
 		result, err = s.installSkillFromZip(skillsDir, req.Source)
 	case "folder":
@@ -768,6 +782,28 @@ func (s *Server) handleSkillsInstall(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, result)
+}
+
+func (s *Server) installSkillFromClawHub(source string) (map[string]interface{}, error) {
+	clawHubSource, err := workspaceSkills.ParseClawHubSource(source)
+	if err != nil {
+		return nil, err
+	}
+
+	installer := workspaceSkills.NewInstaller(s.cfg.Agents.Defaults.Workspace)
+	result, err := installer.InstallFromClawHub(clawHubSource)
+	if err != nil {
+		return nil, err
+	}
+
+	return map[string]interface{}{
+		"ok":       true,
+		"name":     result.Name,
+		"type":     result.Type,
+		"location": result.Location,
+		"version":  result.Version,
+		"registry": result.Registry,
+	}, nil
 }
 
 func (s *Server) installSkillFromGitHub(skillsDir string, repoURL string) (map[string]interface{}, error) {

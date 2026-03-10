@@ -151,6 +151,34 @@ func TestReadChannelSenderStatsAggregatesInboundMessages(t *testing.T) {
 	}
 }
 
+func TestHandleSkillSourcesReturnsRecommendedSources(t *testing.T) {
+	s := &Server{}
+
+	req := httptest.NewRequest(http.MethodGet, "/api/skills/sources", nil)
+	rec := httptest.NewRecorder()
+	s.handleSkillSources(rec, req)
+
+	require.Equal(t, http.StatusOK, rec.Code)
+
+	var payload struct {
+		Sources []struct {
+			ID   string `json:"id"`
+			Type string `json:"type"`
+		} `json:"sources"`
+	}
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &payload))
+	require.NotEmpty(t, payload.Sources)
+
+	hasClawHub := false
+	for _, source := range payload.Sources {
+		if source.ID == "clawhub" && source.Type == "clawhub" {
+			hasClawHub = true
+			break
+		}
+	}
+	assert.True(t, hasClawHub)
+}
+
 func TestReadChannelSenderStatsFiltersByChannel(t *testing.T) {
 	logPath := filepath.Join(t.TempDir(), "session.log")
 	content := strings.Join([]string{

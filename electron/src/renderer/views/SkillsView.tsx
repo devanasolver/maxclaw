@@ -10,53 +10,87 @@ interface Skill {
   installedAt?: string;
 }
 
-// 官方推荐的技能源
-interface RecommendedSkill {
+type InstallType = 'zip' | 'folder' | 'github' | 'clawhub';
+
+interface RecommendedSkillSource {
+  id: string;
   name: string;
-  url: string;
+  type: InstallType;
   description: string;
+  source?: string;
+  browseUrl?: string;
+  example?: string;
 }
 
-const RECOMMENDED_SKILLS: RecommendedSkill[] = [
+const DEFAULT_RECOMMENDED_SOURCES: RecommendedSkillSource[] = [
   {
+    id: 'anthropics-official',
     name: 'Anthropics (Official)',
-    url: 'https://github.com/anthropics/skills/tree/main/skills',
-    description: 'Anthropic 官方技能库'
+    type: 'github',
+    description: 'Anthropic 官方技能库',
+    source: 'https://github.com/anthropics/skills/tree/main/skills',
+    browseUrl: 'https://github.com/anthropics/skills/tree/main/skills',
   },
   {
+    id: 'playwright-cli',
     name: 'Playwright CLI',
-    url: 'https://github.com/microsoft/playwright-cli/tree/main/skills',
-    description: 'Microsoft Playwright 自动化测试技能'
+    type: 'github',
+    description: 'Microsoft Playwright 自动化测试技能',
+    source: 'https://github.com/microsoft/playwright-cli/tree/main/skills',
+    browseUrl: 'https://github.com/microsoft/playwright-cli/tree/main/skills',
   },
   {
+    id: 'vercel-labs',
     name: 'Vercel Labs',
-    url: 'https://github.com/vercel-labs/agent-skills/tree/main/skills',
-    description: 'Vercel Labs 技能库'
+    type: 'github',
+    description: 'Vercel Labs 技能库',
+    source: 'https://github.com/vercel-labs/agent-skills/tree/main/skills',
+    browseUrl: 'https://github.com/vercel-labs/agent-skills/tree/main/skills',
   },
   {
+    id: 'vercel-skills',
     name: 'Vercel Skills',
-    url: 'https://github.com/vercel-labs/skills/tree/main/skills',
-    description: 'Vercel 官方技能'
+    type: 'github',
+    description: 'Vercel 官方技能',
+    source: 'https://github.com/vercel-labs/skills/tree/main/skills',
+    browseUrl: 'https://github.com/vercel-labs/skills/tree/main/skills',
   },
   {
+    id: 'remotion',
     name: 'Remotion',
-    url: 'https://github.com/remotion-dev/skills/tree/main/skills',
-    description: 'Remotion 视频编辑技能'
+    type: 'github',
+    description: 'Remotion 视频编辑技能',
+    source: 'https://github.com/remotion-dev/skills/tree/main/skills',
+    browseUrl: 'https://github.com/remotion-dev/skills/tree/main/skills',
   },
   {
+    id: 'superpowers',
     name: 'Superpowers',
-    url: 'https://github.com/obra/superpowers/tree/main/skills',
-    description: 'Superpowers 增强技能'
-  }
+    type: 'github',
+    description: 'Superpowers 增强技能',
+    source: 'https://github.com/obra/superpowers/tree/main/skills',
+    browseUrl: 'https://github.com/obra/superpowers/tree/main/skills',
+  },
+  {
+    id: 'clawhub',
+    name: 'ClawHub Registry',
+    type: 'clawhub',
+    description: 'ClawHub 公共技能市场',
+    browseUrl: 'https://clawhub.ai/skills',
+    example: 'clawhub://gifgrep',
+  },
 ];
 
 export function SkillsView() {
   const { t } = useTranslation();
   const [skills, setSkills] = useState<Skill[]>([]);
+  const [recommendedSources, setRecommendedSources] = useState<
+    RecommendedSkillSource[]
+  >(DEFAULT_RECOMMENDED_SOURCES);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [installModalOpen, setInstallModalOpen] = useState(false);
-  const [installType, setInstallType] = useState<'zip' | 'folder' | 'github'>('github');
+  const [installType, setInstallType] = useState<InstallType>('github');
   const [installUrl, setInstallUrl] = useState('');
   const [selectedRecommend, setSelectedRecommend] = useState<string>('');
   const [useCustomUrl, setUseCustomUrl] = useState(false);
@@ -77,17 +111,34 @@ export function SkillsView() {
     }
   }, []);
 
+  const fetchRecommendedSources = useCallback(async () => {
+    try {
+      const response = await fetch('http://127.0.0.1:18890/api/skills/sources');
+      if (!response.ok) throw new Error('Failed to fetch skill sources');
+      const data = await response.json();
+      if (Array.isArray(data.sources) && data.sources.length > 0) {
+        setRecommendedSources(data.sources as RecommendedSkillSource[]);
+      }
+    } catch {
+      setRecommendedSources(DEFAULT_RECOMMENDED_SOURCES);
+    }
+  }, []);
+
   useEffect(() => {
     void fetchSkills();
+    void fetchRecommendedSources();
     // Only fetch on mount
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const toggleSkill = async (name: string, enabled: boolean) => {
     try {
-      const response = await fetch(`http://127.0.0.1:18890/api/skills/${name}/${enabled ? 'disable' : 'enable'}`, {
-        method: 'POST'
-      });
+      const response = await fetch(
+        `http://127.0.0.1:18890/api/skills/${name}/${enabled ? 'disable' : 'enable'}`,
+        {
+          method: 'POST',
+        },
+      );
       if (!response.ok) throw new Error('Failed to toggle skill');
       void fetchSkills();
     } catch (err) {
@@ -98,18 +149,17 @@ export function SkillsView() {
   const handleInstall = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const source = installType === 'github' && !useCustomUrl && selectedRecommend
-        ? selectedRecommend
-        : installUrl;
-
-      const response = await fetch('http://127.0.0.1:18890/api/skills/install', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          type: installType,
-          source: source
-        })
-      });
+      const response = await fetch(
+        'http://127.0.0.1:18890/api/skills/install',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: installType,
+            source: installUrl,
+          }),
+        },
+      );
       if (!response.ok) throw new Error('Failed to install skill');
       setInstallModalOpen(false);
       setInstallUrl('');
@@ -121,36 +171,64 @@ export function SkillsView() {
     }
   };
 
+  const visibleRecommendedSources = recommendedSources.filter(
+    (source) => source.type === installType,
+  );
+  const selectedSource =
+    visibleRecommendedSources.find(
+      (source) => source.id === selectedRecommend,
+    ) || null;
+  const installInputReadOnly = Boolean(selectedSource?.source) && !useCustomUrl;
+
   const handleRecommendChange = (value: string) => {
     if (value === 'custom') {
       setUseCustomUrl(true);
       setSelectedRecommend('');
       setInstallUrl('');
     } else {
+      const next = recommendedSources.find((source) => source.id === value);
+      if (!next) return;
+      const nextValue = next.source || next.example || '';
+      setInstallType(next.type);
       setUseCustomUrl(false);
-      setSelectedRecommend(value);
-      setInstallUrl(value);
+      setSelectedRecommend(next.id);
+      setInstallUrl(nextValue);
     }
   };
 
   const getSkillIcon = (skill: Skill) => {
     if (skill.icon) return skill.icon;
-    if (skill.name.includes('docx') || skill.name.includes('document')) return '📄';
-    if (skill.name.includes('xlsx') || skill.name.includes('excel') || skill.name.includes('sheet')) return '📊';
-    if (skill.name.includes('pptx') || skill.name.includes('slide')) return '📽️';
+    if (skill.name.includes('docx') || skill.name.includes('document'))
+      return '📄';
+    if (
+      skill.name.includes('xlsx') ||
+      skill.name.includes('excel') ||
+      skill.name.includes('sheet')
+    )
+      return '📊';
+    if (skill.name.includes('pptx') || skill.name.includes('slide'))
+      return '📽️';
     if (skill.name.includes('pdf')) return '📑';
-    if (skill.name.includes('web') || skill.name.includes('search')) return '🌐';
+    if (skill.name.includes('web') || skill.name.includes('search'))
+      return '🌐';
     if (skill.name.includes('image') || skill.name.includes('img')) return '🖼️';
-    if (skill.name.includes('cron') || skill.name.includes('schedule')) return '⏰';
+    if (skill.name.includes('cron') || skill.name.includes('schedule'))
+      return '⏰';
     return '🦞';
   };
 
   const getInstallPlaceholder = () => {
     switch (installType) {
-      case 'github': return t('skills.install.placeholder.github');
-      case 'zip': return t('skills.install.placeholder.zip');
-      case 'folder': return t('skills.install.placeholder.folder');
-      default: return '';
+      case 'github':
+        return t('skills.install.placeholder.github');
+      case 'clawhub':
+        return t('skills.install.placeholder.clawhub');
+      case 'zip':
+        return t('skills.install.placeholder.zip');
+      case 'folder':
+        return t('skills.install.placeholder.folder');
+      default:
+        return '';
     }
   };
 
@@ -170,8 +248,12 @@ export function SkillsView() {
       <div className="mx-auto max-w-5xl [transform:translateZ(0)]">
         <div className="relative z-20 mb-6 flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">{t('skills.title')}</h1>
-            <p className="mt-1 text-sm text-foreground/55">{t('skills.subtitle')}</p>
+            <h1 className="text-2xl font-bold text-foreground">
+              {t('skills.title')}
+            </h1>
+            <p className="mt-1 text-sm text-foreground/55">
+              {t('skills.subtitle')}
+            </p>
           </div>
           <div className="relative z-20 no-drag">
             <button
@@ -193,7 +275,9 @@ export function SkillsView() {
 
         {installModalOpen && (
           <div className="mb-6 rounded-xl border border-border bg-background p-5 shadow-sm">
-            <h3 className="mb-4 text-base font-semibold">{t('skills.install.title')}</h3>
+            <h3 className="mb-4 text-base font-semibold">
+              {t('skills.install.title')}
+            </h3>
             <form onSubmit={handleInstall} className="space-y-4">
               <div className="flex gap-4">
                 <label className="flex items-center gap-2">
@@ -201,7 +285,10 @@ export function SkillsView() {
                     type="radio"
                     value="github"
                     checked={installType === 'github'}
-                    onChange={() => { setInstallType('github'); setInstallUrl(''); }}
+                    onChange={() => {
+                      setInstallType('github');
+                      setInstallUrl('');
+                    }}
                     className="h-4 w-4 text-primary"
                   />
                   <span className="text-sm">{t('skills.install.github')}</span>
@@ -211,7 +298,12 @@ export function SkillsView() {
                     type="radio"
                     value="zip"
                     checked={installType === 'zip'}
-                    onChange={() => { setInstallType('zip'); setInstallUrl(''); }}
+                    onChange={() => {
+                      setInstallType('zip');
+                      setInstallUrl('');
+                      setSelectedRecommend('');
+                      setUseCustomUrl(false);
+                    }}
                     className="h-4 w-4 text-primary"
                   />
                   <span className="text-sm">{t('skills.install.zip')}</span>
@@ -219,29 +311,53 @@ export function SkillsView() {
                 <label className="flex items-center gap-2">
                   <input
                     type="radio"
+                    value="clawhub"
+                    checked={installType === 'clawhub'}
+                    onChange={() => {
+                      setInstallType('clawhub');
+                      setInstallUrl('');
+                      setSelectedRecommend('');
+                      setUseCustomUrl(false);
+                    }}
+                    className="h-4 w-4 text-primary"
+                  />
+                  <span className="text-sm">{t('skills.install.clawhub')}</span>
+                </label>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="radio"
                     value="folder"
                     checked={installType === 'folder'}
-                    onChange={() => { setInstallType('folder'); setInstallUrl(''); }}
+                    onChange={() => {
+                      setInstallType('folder');
+                      setInstallUrl('');
+                      setSelectedRecommend('');
+                      setUseCustomUrl(false);
+                    }}
                     className="h-4 w-4 text-primary"
                   />
                   <span className="text-sm">{t('skills.install.folder')}</span>
                 </label>
               </div>
 
-              {installType === 'github' && (
+              {(installType === 'github' || installType === 'clawhub') && (
                 <div className="space-y-3">
                   <div>
                     <label className="mb-1.5 block text-xs font-medium text-foreground/70">
-                      推荐技能源
+                      {installType === 'clawhub' ? '推荐市场' : '推荐技能源'}
                     </label>
                     <select
-                      value={useCustomUrl ? 'custom' : selectedRecommend}
+                      value={selectedRecommend || (useCustomUrl ? 'custom' : '')}
                       onChange={(e) => handleRecommendChange(e.target.value)}
                       className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary/40 focus:outline-none"
                     >
-                      <option value="">选择推荐技能源...</option>
-                      {RECOMMENDED_SKILLS.map((skill) => (
-                        <option key={skill.url} value={skill.url}>
+                      <option value="">
+                        {installType === 'clawhub'
+                          ? '选择推荐市场...'
+                          : '选择推荐技能源...'}
+                      </option>
+                      {visibleRecommendedSources.map((skill) => (
+                        <option key={skill.id} value={skill.id}>
                           {skill.name} - {skill.description}
                         </option>
                       ))}
@@ -252,20 +368,35 @@ export function SkillsView() {
                   {(useCustomUrl || selectedRecommend) && (
                     <div>
                       <label className="mb-1.5 block text-xs font-medium text-foreground/70">
-                        GitHub URL
+                        {installType === 'clawhub'
+                          ? 'ClawHub slug / URL'
+                          : 'GitHub URL'}
                       </label>
                       <input
                         type="text"
                         value={installUrl}
                         onChange={(e) => setInstallUrl(e.target.value)}
                         placeholder={getInstallPlaceholder()}
-                        readOnly={!useCustomUrl && !!selectedRecommend}
+                        readOnly={installInputReadOnly}
                         className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-foreground/40 focus:border-primary/40 focus:outline-none disabled:bg-secondary/50"
                         required
                       />
                       {!useCustomUrl && selectedRecommend && (
                         <p className="mt-1 text-xs text-foreground/50">
                           已选择推荐源，如需修改请切换到"自定义 URL"
+                        </p>
+                      )}
+                      {selectedSource?.browseUrl && (
+                        <p className="mt-1 text-xs text-foreground/50">
+                          Browse:{' '}
+                          <a
+                            href={selectedSource.browseUrl}
+                            className="underline"
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            {selectedSource.browseUrl}
+                          </a>
                         </p>
                       )}
                     </div>
@@ -287,9 +418,10 @@ export function SkillsView() {
                     <button
                       type="button"
                       onClick={async () => {
-                        const result = await window.electronAPI.system.selectFile([
-                          { name: 'ZIP files', extensions: ['zip'] }
-                        ]);
+                        const result =
+                          await window.electronAPI.system.selectFile([
+                            { name: 'ZIP files', extensions: ['zip'] },
+                          ]);
                         if (result) setInstallUrl(result);
                       }}
                       className="flex items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-2 text-sm font-medium text-foreground hover:bg-secondary"
@@ -299,7 +431,8 @@ export function SkillsView() {
                     </button>
                   </div>
                   <p className="text-xs text-foreground/50">
-                    {t('skills.install.zip.help') || '选择 .zip 技能包文件，或输入完整路径'}
+                    {t('skills.install.zip.help') ||
+                      '选择 .zip 技能包文件，或输入完整路径'}
                   </p>
                 </div>
               )}
@@ -318,7 +451,8 @@ export function SkillsView() {
                     <button
                       type="button"
                       onClick={async () => {
-                        const result = await window.electronAPI.system.selectFolder();
+                        const result =
+                          await window.electronAPI.system.selectFolder();
                         if (result) setInstallUrl(result);
                       }}
                       className="flex items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-2 text-sm font-medium text-foreground hover:bg-secondary"
@@ -328,7 +462,8 @@ export function SkillsView() {
                     </button>
                   </div>
                   <p className="text-xs text-foreground/50">
-                    {t('skills.install.folder.help') || '选择技能文件夹，或输入完整路径'}
+                    {t('skills.install.folder.help') ||
+                      '选择技能文件夹，或输入完整路径'}
                   </p>
                 </div>
               )}
@@ -363,21 +498,29 @@ export function SkillsView() {
         </div>
 
         {loading && skills.length === 0 ? (
-          <div className="py-12 text-center text-foreground/50">{t('common.loading')}</div>
+          <div className="py-12 text-center text-foreground/50">
+            {t('common.loading')}
+          </div>
         ) : skills.length === 0 ? (
           <div className="py-12 text-center">
             <p className="text-foreground/50">{t('skills.empty')}</p>
-            <p className="mt-1 text-sm text-foreground/40">{t('skills.empty.hint')}</p>
+            <p className="mt-1 text-sm text-foreground/40">
+              {t('skills.empty.hint')}
+            </p>
           </div>
         ) : filteredSkills.length === 0 ? (
-          <div className="py-12 text-center text-foreground/50">没有匹配的已安装技能</div>
+          <div className="py-12 text-center text-foreground/50">
+            没有匹配的已安装技能
+          </div>
         ) : (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {filteredSkills.map((skill) => (
               <div
                 key={skill.name}
                 className={`rounded-xl border bg-background p-5 shadow-sm transition-all ${
-                  skill.enabled ? 'border-border' : 'border-border/50 opacity-60'
+                  skill.enabled
+                    ? 'border-border'
+                    : 'border-border/50 opacity-60'
                 }`}
               >
                 <div className="flex items-start justify-between">
@@ -386,7 +529,9 @@ export function SkillsView() {
                       {getSkillIcon(skill)}
                     </span>
                     <div>
-                      <h3 className="font-semibold text-foreground">{skill.displayName}</h3>
+                      <h3 className="font-semibold text-foreground">
+                        {skill.displayName}
+                      </h3>
                       <p className="text-xs text-foreground/50">{skill.name}</p>
                     </div>
                   </div>
@@ -406,7 +551,9 @@ export function SkillsView() {
 
                 {skill.description && (
                   <div className="group relative mt-3 [transform:translateZ(0)]">
-                    <p className="cursor-help text-sm text-foreground/70 line-clamp-2">{skill.description}</p>
+                    <p className="cursor-help text-sm text-foreground/70 line-clamp-2">
+                      {skill.description}
+                    </p>
                     <div className="pointer-events-none absolute left-0 top-full z-30 mt-2 w-full min-w-[16rem] translate-y-1 rounded-xl border border-border/80 bg-card p-3 text-xs leading-5 text-foreground shadow-[0_14px_34px_rgba(15,23,42,0.18)] opacity-0 transition-all duration-200 group-hover:translate-y-0 group-hover:opacity-100">
                       {skill.description}
                     </div>
@@ -430,8 +577,18 @@ export function SkillsView() {
 // Icon component for file/folder picker
 function FolderOpenIcon({ className }: { className?: string }) {
   return (
-    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 19a2 2 0 01-2-2V7a2 2 0 012-2h4l2 2h4a2 2 0 012 2v1M5 19h14a2 2 0 002-2v-5a2 2 0 00-2-2H9a2 2 0 00-2 2v5a2 2 0 01-2 2z" />
+    <svg
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M5 19a2 2 0 01-2-2V7a2 2 0 012-2h4l2 2h4a2 2 0 012 2v1M5 19h14a2 2 0 002-2v-5a2 2 0 00-2-2H9a2 2 0 00-2 2v5a2 2 0 01-2 2z"
+      />
     </svg>
   );
 }

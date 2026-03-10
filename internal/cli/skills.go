@@ -192,6 +192,10 @@ Examples:
   # Install single skill file
   maxclaw skills install github.com/openclaw/skills/blob/main/skills/weather/SKILL.md
 
+  # Install from ClawHub registry
+  maxclaw skills install clawhub://gifgrep
+  maxclaw skills install https://clawhub.ai/steipete/gifgrep
+
   # Install from local directory
   maxclaw skills install /path/to/skills`,
 	RunE: func(cmd *cobra.Command, args []string) error {
@@ -231,14 +235,17 @@ Examples:
 
 // installFromSource 智能识别源类型并安装
 func installFromSource(installer *skills.Installer, workspace, source string) error {
-	// 标准化 source（去掉 https:// 前缀）
-	source = strings.TrimPrefix(source, "https://")
-	source = strings.TrimPrefix(source, "http://")
-	source = strings.TrimSuffix(source, "/")
+	source = strings.TrimSpace(source)
+	sourceNoScheme := strings.TrimPrefix(strings.TrimPrefix(source, "https://"), "http://")
+	sourceNoScheme = strings.TrimSuffix(sourceNoScheme, "/")
 
 	// 判断是否为 GitHub URL
-	if isGitHubURL(source) {
-		return installFromGitHub(installer, workspace, source)
+	if isGitHubURL(sourceNoScheme) {
+		return installFromGitHub(installer, workspace, sourceNoScheme)
+	}
+
+	if isClawHubSource(source) {
+		return installFromClawHub(installer, source)
 	}
 
 	// 本地路径
@@ -254,6 +261,13 @@ func installFromSource(installer *skills.Installer, workspace, source string) er
 func isGitHubURL(source string) bool {
 	return strings.HasPrefix(source, "github.com/") ||
 		strings.HasPrefix(source, "raw.githubusercontent.com/")
+}
+
+func isClawHubSource(source string) bool {
+	source = strings.TrimSpace(source)
+	return strings.HasPrefix(source, "clawhub://") ||
+		strings.HasPrefix(source, "clawhub:") ||
+		strings.Contains(source, "clawhub.ai/")
 }
 
 // installFromGitHub 从 GitHub 智能安装
@@ -284,6 +298,26 @@ func installFromGitHub(installer *skills.Installer, workspace, source string) er
 	default:
 		return fmt.Errorf("unrecognized GitHub URL format: %s", source)
 	}
+}
+
+func installFromClawHub(installer *skills.Installer, source string) error {
+	clawHubSource, err := skills.ParseClawHubSource(source)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("📦 Installing from ClawHub: %s\n", clawHubSource.Slug)
+	result, err := installer.InstallFromClawHub(clawHubSource)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("✓ Installed %s", result.Name)
+	if result.Version != "" {
+		fmt.Printf(" v%s", result.Version)
+	}
+	fmt.Println()
+	return nil
 }
 
 // GitHubRepoInfo 解析后的 GitHub 信息（内部使用，与 skills.GitHubSource 结构一致）

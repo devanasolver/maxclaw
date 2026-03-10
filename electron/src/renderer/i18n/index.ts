@@ -51,11 +51,13 @@ const zh: Translations = {
   'settings.gateway.executionMode.safe': 'safe（只读探索）',
   'settings.gateway.executionMode.ask': 'ask（默认）',
   'settings.gateway.executionMode.auto': 'auto（全自动）',
-  'settings.gateway.executionMode.hint': 'auto 模式不需要人工“继续”审批；达到上限后会自动停止。',
+  'settings.gateway.executionMode.hint':
+    'auto 模式不需要人工“继续”审批；达到上限后会自动停止。',
   'settings.gateway.executionMode.saveError': '保存执行模式失败，请稍后重试',
   'settings.gateway.executionMode.saving': '保存中...',
   'settings.gateway.maxToolIterations': '工具迭代上限',
-  'settings.gateway.maxToolIterations.hint': '默认 200。值越大越不容易提前中断，但单次任务耗时可能更长。',
+  'settings.gateway.maxToolIterations.hint':
+    '默认 200。值越大越不容易提前中断，但单次任务耗时可能更长。',
   'settings.gateway.maxToolIterations.invalid': '请输入大于等于 1 的整数',
   'settings.gateway.maxToolIterations.saveError': '保存失败，请稍后重试',
   'settings.gateway.maxToolIterations.saving': '保存中...',
@@ -96,9 +98,12 @@ const zh: Translations = {
   'skills.install': '安装技能',
   'skills.install.title': '安装新技能',
   'skills.install.github': 'GitHub',
+  'skills.install.clawhub': 'ClawHub',
   'skills.install.zip': 'ZIP 文件',
   'skills.install.folder': '本地文件夹',
   'skills.install.placeholder.github': 'https://github.com/username/skill-repo',
+  'skills.install.placeholder.clawhub':
+    'clawhub://gifgrep 或 https://clawhub.ai/owner/slug',
   'skills.install.placeholder.zip': '/path/to/skill.zip',
   'skills.install.placeholder.folder': '/path/to/skill-folder',
   'skills.empty': '暂无已安装技能',
@@ -134,7 +139,8 @@ const zh: Translations = {
   'chat.starter.card.bugfix.prompt':
     '帮我定位并修复当前项目中的 bug。先阅读相关代码和日志，给出根因分析，再直接修改代码并补上必要测试。最后说明改动影响范围、潜在回归点以及验证结果。',
   'chat.starter.card.feature.title': '完成一个网页游戏',
-  'chat.starter.card.feature.description': '做一个画质精美、手感流畅的贪吃蛇网页游戏',
+  'chat.starter.card.feature.description':
+    '做一个画质精美、手感流畅的贪吃蛇网页游戏',
   'chat.starter.card.feature.prompt':
     '请直接完成一个有意思、画质精美的贪吃蛇网页游戏。要求包含：精致的视觉风格、流畅的移动与碰撞反馈、得分系统、开始/暂停/失败重开、逐步提升难度、适合桌面和移动端操作。优先交付一个可直接运行的完整网页版本，并说明主要玩法设计、技术实现和资源文件位置。',
   'chat.starter.card.plan.title': '复杂任务拆解',
@@ -206,7 +212,8 @@ const zh: Translations = {
   'scheduled.executionMode.safe.short': 'Safe',
   'scheduled.executionMode.ask.short': 'Ask',
   'scheduled.executionMode.auto.short': 'Auto',
-  'scheduled.executionMode.safe.desc': 'Safe 模式：只读探索，不执行任何修改操作',
+  'scheduled.executionMode.safe.desc':
+    'Safe 模式：只读探索，不执行任何修改操作',
   'scheduled.executionMode.ask.desc': 'Ask 模式：需要用户确认后继续（默认）',
   'scheduled.executionMode.auto.desc': 'Auto 模式：全自动执行，无需人工介入',
   'scheduled.loading': '加载中...',
@@ -238,9 +245,12 @@ const zh: Translations = {
   'scheduled.form.summary.schedule': '当前节奏',
   'scheduled.form.summary.mode': '执行模式',
   'scheduled.form.summary.channels': '输出渠道',
-  'scheduled.form.summary.tip.cron': '适合长期重复任务。左侧保留摘要，右侧专注调整 Cron 规则和具体时间。',
-  'scheduled.form.summary.tip.every': '适合固定毫秒间隔的轮询或同步任务，右侧直接填写精确间隔。',
-  'scheduled.form.summary.tip.once': '适合一次性定时触发，右侧填写准确执行时间即可。',
+  'scheduled.form.summary.tip.cron':
+    '适合长期重复任务。左侧保留摘要，右侧专注调整 Cron 规则和具体时间。',
+  'scheduled.form.summary.tip.every':
+    '适合固定毫秒间隔的轮询或同步任务，右侧直接填写精确间隔。',
+  'scheduled.form.summary.tip.once':
+    '适合一次性定时触发，右侧填写准确执行时间即可。',
   'scheduled.error.load': '加载失败',
   'scheduled.error.create': '创建失败',
   'scheduled.error.update': '更新失败',
@@ -338,13 +348,18 @@ const en: Translations = {
   'settings.gateway.executionMode.safe': 'safe (read-only exploration)',
   'settings.gateway.executionMode.ask': 'ask (default)',
   'settings.gateway.executionMode.auto': 'auto (fully autonomous)',
-  'settings.gateway.executionMode.hint': 'Auto mode removes manual "continue" approvals; execution stops automatically when limit is hit.',
-  'settings.gateway.executionMode.saveError': 'Failed to save execution mode. Please try again.',
+  'settings.gateway.executionMode.hint':
+    'Auto mode removes manual "continue" approvals; execution stops automatically when limit is hit.',
+  'settings.gateway.executionMode.saveError':
+    'Failed to save execution mode. Please try again.',
   'settings.gateway.executionMode.saving': 'Saving...',
   'settings.gateway.maxToolIterations': 'Max Tool Iterations',
-  'settings.gateway.maxToolIterations.hint': 'Default is 200. Higher values reduce early stop risk but can increase task duration.',
-  'settings.gateway.maxToolIterations.invalid': 'Please enter an integer greater than or equal to 1',
-  'settings.gateway.maxToolIterations.saveError': 'Failed to save. Please try again.',
+  'settings.gateway.maxToolIterations.hint':
+    'Default is 200. Higher values reduce early stop risk but can increase task duration.',
+  'settings.gateway.maxToolIterations.invalid':
+    'Please enter an integer greater than or equal to 1',
+  'settings.gateway.maxToolIterations.saveError':
+    'Failed to save. Please try again.',
   'settings.gateway.maxToolIterations.saving': 'Saving...',
   'settings.notifications': 'Notifications',
   'settings.notifications.enable': 'Enable System Notifications',
@@ -354,7 +369,8 @@ const en: Translations = {
   'settings.category.general': 'General',
   'settings.category.general.desc': 'Appearance, language, and system behavior',
   'settings.category.providers': 'Model Config',
-  'settings.category.providers.desc': 'Manage providers and connection settings',
+  'settings.category.providers.desc':
+    'Manage providers and connection settings',
   'settings.category.channels': 'Channels',
   'settings.category.channels.desc': 'Email and IM bot integration settings',
   'settings.category.gateway': 'Gateway',
@@ -383,9 +399,12 @@ const en: Translations = {
   'skills.install': 'Install Skill',
   'skills.install.title': 'Install New Skill',
   'skills.install.github': 'GitHub',
+  'skills.install.clawhub': 'ClawHub',
   'skills.install.zip': 'ZIP File',
   'skills.install.folder': 'Local Folder',
   'skills.install.placeholder.github': 'https://github.com/username/skill-repo',
+  'skills.install.placeholder.clawhub':
+    'clawhub://gifgrep or https://clawhub.ai/owner/slug',
   'skills.install.placeholder.zip': '/path/to/skill.zip',
   'skills.install.placeholder.folder': '/path/to/skill-folder',
   'skills.empty': 'No skills installed',
@@ -406,30 +425,37 @@ const en: Translations = {
 
   // Chat
   'chat.starter.title': 'Launch Your MaxClaw',
-  'chat.starter.subtitle': 'Reads files, runs tasks, and keeps moving work forward.',
+  'chat.starter.subtitle':
+    'Reads files, runs tasks, and keeps moving work forward.',
   'chat.starter.templates': 'Task Templates',
   'chat.starter.card.report.title': 'Executive Weekly Report',
-  'chat.starter.card.report.description': 'Summarize progress, risks, metrics, and next steps',
+  'chat.starter.card.report.description':
+    'Summarize progress, risks, metrics, and next steps',
   'chat.starter.card.report.prompt':
     'Draft a weekly report for leadership that includes: progress this week, key outcomes, risks and blockers, supporting metrics, and next week plan. Keep the tone concise and executive-ready. If metrics or owners are missing, list them as open items to confirm.',
   'chat.starter.card.meeting.title': 'Meeting Notes to Action Items',
-  'chat.starter.card.meeting.description': 'Turn meeting notes into decisions, owners, and deadlines',
+  'chat.starter.card.meeting.description':
+    'Turn meeting notes into decisions, owners, and deadlines',
   'chat.starter.card.meeting.prompt':
     'Based on the meeting notes I provide, produce a structured summary that includes: meeting topic, key decisions, action items, owners, due dates, and risks. If owners or due dates are missing in the source, call them out as follow-up items.',
   'chat.starter.card.bugfix.title': 'Fix a Bug',
-  'chat.starter.card.bugfix.description': 'Read code and logs, find the root cause, and patch it',
+  'chat.starter.card.bugfix.description':
+    'Read code and logs, find the root cause, and patch it',
   'chat.starter.card.bugfix.prompt':
     'Help me diagnose and fix a bug in the current project. First inspect the relevant code and logs, explain the root cause, then make the code changes and add any necessary tests. Finish with the impact scope, regression risks, and validation results.',
   'chat.starter.card.feature.title': 'Build a Web Game',
-  'chat.starter.card.feature.description': 'Create a polished, visually rich Snake game for the web',
+  'chat.starter.card.feature.description':
+    'Create a polished, visually rich Snake game for the web',
   'chat.starter.card.feature.prompt':
     'Build a fun, polished Snake web game with strong visual quality. It should include: refined art direction, smooth movement and collision feedback, score tracking, start/pause/game-over restart flow, progressively increasing difficulty, and controls that work well on both desktop and mobile. Prioritize delivering a complete runnable web version, then summarize the gameplay design, technical approach, and where the key files live.',
   'chat.starter.card.plan.title': 'Break Down a Complex Task',
-  'chat.starter.card.plan.description': 'Turn a vague goal into concrete steps and milestones',
+  'chat.starter.card.plan.description':
+    'Turn a vague goal into concrete steps and milestones',
   'chat.starter.card.plan.prompt':
     'Break this goal down into an executable task plan. For each task include: objective, input, output, priority, estimated effort, and dependencies. Then provide the recommended execution order, key milestones, main risks, and rollback options.',
   'chat.starter.card.research.title': 'Research Competitors / Options',
-  'chat.starter.card.research.description': 'Compare products or technical approaches and recommend one',
+  'chat.starter.card.research.description':
+    'Compare products or technical approaches and recommend one',
   'chat.starter.card.research.prompt':
     'Research this topic by comparing at least three competitors or three technical options. For each one, cover positioning or fit, core capabilities, pros and cons, cost, risks, and your final recommendation. The output should be structured and ready to support a decision.',
   'chat.timeline.label.thinking': 'Thinking',
@@ -493,8 +519,10 @@ const en: Translations = {
   'scheduled.executionMode.safe.short': 'Safe',
   'scheduled.executionMode.ask.short': 'Ask',
   'scheduled.executionMode.auto.short': 'Auto',
-  'scheduled.executionMode.safe.desc': 'Safe mode: read-only exploration, no modifications',
-  'scheduled.executionMode.ask.desc': 'Ask mode: requires user confirmation (default)',
+  'scheduled.executionMode.safe.desc':
+    'Safe mode: read-only exploration, no modifications',
+  'scheduled.executionMode.ask.desc':
+    'Ask mode: requires user confirmation (default)',
   'scheduled.executionMode.auto.desc': 'Auto mode: fully autonomous execution',
   'scheduled.loading': 'Loading...',
   'scheduled.empty': 'No scheduled tasks',
@@ -513,7 +541,8 @@ const en: Translations = {
   'scheduled.edit.title': 'Edit task',
   'scheduled.delete': 'Delete',
   'scheduled.delete.title': 'Delete task',
-  'scheduled.delete.confirm': 'Are you sure you want to delete this scheduled task?',
+  'scheduled.delete.confirm':
+    'Are you sure you want to delete this scheduled task?',
   'scheduled.executionHistory': 'Execution History',
   'scheduled.executionHistory.all': 'All execution records',
   'scheduled.executionHistory.viewAll': 'View All',
@@ -525,9 +554,12 @@ const en: Translations = {
   'scheduled.form.summary.schedule': 'Cadence',
   'scheduled.form.summary.mode': 'Execution mode',
   'scheduled.form.summary.channels': 'Output channels',
-  'scheduled.form.summary.tip.cron': 'Best for recurring tasks. Keep the summary on the left and tune cron rules and time details on the right.',
-  'scheduled.form.summary.tip.every': 'Best for polling and sync jobs with a fixed millisecond interval. Enter the precise interval on the right.',
-  'scheduled.form.summary.tip.once': 'Best for one-off execution. Enter the exact run time on the right.',
+  'scheduled.form.summary.tip.cron':
+    'Best for recurring tasks. Keep the summary on the left and tune cron rules and time details on the right.',
+  'scheduled.form.summary.tip.every':
+    'Best for polling and sync jobs with a fixed millisecond interval. Enter the precise interval on the right.',
+  'scheduled.form.summary.tip.once':
+    'Best for one-off execution. Enter the exact run time on the right.',
   'scheduled.error.load': 'Failed to load',
   'scheduled.error.create': 'Failed to create',
   'scheduled.error.update': 'Failed to update',
@@ -542,10 +574,12 @@ const en: Translations = {
   'scheduled.channel.name.slack': 'Slack',
   'scheduled.channel.name.email': 'Email',
   'scheduled.channel.name.websocket': 'WebSocket',
-  'scheduled.channel.desktop.desc': 'Results will be displayed in the desktop app',
+  'scheduled.channel.desktop.desc':
+    'Results will be displayed in the desktop app',
   'scheduled.channel.other.desc': 'Results will be sent to',
   'scheduled.channels.desc': 'Results will be sent to: {channels}',
-  'scheduled.channels.multiHint': 'Multiple selection supported; keep at least one channel',
+  'scheduled.channels.multiHint':
+    'Multiple selection supported; keep at least one channel',
   'scheduled.saveChanges': 'Save Changes',
   'scheduled.disable': 'Disable',
   'scheduled.enable': 'Enable',
@@ -587,11 +621,15 @@ const translations: Record<Language, Translations> = { zh, en };
 export function useTranslation() {
   const { language } = useSelector((state: RootState) => state.ui);
 
-  const t = useCallback((key: string): string => {
-    const currentTranslations = translations[language as Language] || translations.zh;
-    const value = currentTranslations[key];
-    return typeof value === 'string' ? value : key;
-  }, [language]);
+  const t = useCallback(
+    (key: string): string => {
+      const currentTranslations =
+        translations[language as Language] || translations.zh;
+      const value = currentTranslations[key];
+      return typeof value === 'string' ? value : key;
+    },
+    [language],
+  );
 
   return { t, language };
 }

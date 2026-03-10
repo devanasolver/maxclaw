@@ -43,6 +43,15 @@ type Installer struct {
 	httpClient *http.Client
 }
 
+type InstallResult struct {
+	Name     string `json:"name"`
+	Type     string `json:"type"`
+	Location string `json:"location"`
+	Version  string `json:"version,omitempty"`
+	Source   string `json:"source,omitempty"`
+	Registry string `json:"registry,omitempty"`
+}
+
 // NewInstaller 创建 skills 安装器
 func NewInstaller(workspace string) *Installer {
 	return &Installer{
@@ -480,6 +489,27 @@ func (i *Installer) downloadFileWithContext(ctx context.Context, url, filepath s
 	return err
 }
 
+func (i *Installer) downloadBytesWithContext(ctx context.Context, rawURL string) ([]byte, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, rawURL, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("User-Agent", "maxclaw-skills-installer/1.0")
+
+	resp, err := i.httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("bad status: %s", resp.Status)
+	}
+
+	return io.ReadAll(resp.Body)
+}
+
 // extractSkills 解压 zip 文件中的 skills 到目标目录
 // 返回安装的文件数量
 func (i *Installer) extractSkills(zipPath, targetDir string) (int, error) {
@@ -558,6 +588,56 @@ func (i *Installer) extractSkills(zipPath, targetDir string) (int, error) {
 	}
 
 	return installedCount, nil
+}
+
+func (i *Installer) extractArchive(zipPath, targetDir string) error {
+	r, err := zip.OpenReader(zipPath)
+	if err != nil {
+		return err
+	}
+	defer r.Close()
+
+	for _, f := range r.File {
+		if f.FileInfo().IsDir() {
+			continue
+		}
+
+		targetPath := filepath.Join(targetDir, filepath.Clean(f.Name))
+		rel, err := filepath.Rel(targetDir, targetPath)
+		if err != nil {
+			return err
+		}
+		if strings.HasPrefix(rel, "..") {
+			return fmt.Errorf("invalid archive path: %s", f.Name)
+		}
+
+		if err := os.MkdirAll(filepath.Dir(targetPath), 0755); err != nil {
+			return err
+		}
+
+		rc, err := f.Open()
+		if err != nil {
+			return err
+		}
+
+		out, err := os.Create(targetPath)
+		if err != nil {
+			rc.Close()
+			return err
+		}
+
+		_, copyErr := io.Copy(out, rc)
+		closeErr := out.Close()
+		rc.Close()
+		if copyErr != nil {
+			return copyErr
+		}
+		if closeErr != nil {
+			return closeErr
+		}
+	}
+
+	return nil
 }
 
 // InstallIfNeeded 如果需要则安装官方 skills（用于自动检测）
@@ -720,4 +800,92 @@ func (i *Installer) InstallSubPath(source GitHubSource) error {
 	targetDir := filepath.Join(i.workspace, "skills")
 	_, err := i.installSubPath(source, targetDir)
 	return err
+}
+
+type clawHubSkillDetailResponse struct {
+	Skill struct {
+		Slug        string            `json:"slug"`
+		DisplayName string            `json:"displayName"`
+		Tags        map[string]string `json:"tags"`
+	} `json:"skill"`
+	LatestVersion struct {
+		Version string `json:"version"`
+	} `json:"latestVersion"`
+}
+
+func (i *Installer) InstallFromClawHub(source ClawHubSource) (*InstallResult, error) {
+	if strings.TrimSpace(source.Registry) == "" {
+		source.Registry = DefaultClawHubRegistry
+	}
+	if strings.TrimSpace(source.Slug) == "" {
+		return nil, fmt.Errorf("clawhub slug is required")
+	}
+
+	metaURL := fmt.Sprintf("%s/api/v1/skills/%s", strings.TrimRight(source.Registry, "/"), url.PathEscape(source.Slug))
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	payload, err := i.downloadBytesWithContext(ctx, metaURL)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch clawhub metadata: %w", err)
+	}
+
+	var meta clawHubSkillDetailResponse
+	if err := json.Unmarshal(payload, &meta); err != nil {
+		return nil, fmt.Errorf("failed to decode clawhub metadata: %w", err)
+	}
+
+	version := strings.TrimSpace(source.Version)
+	if version == "" {
+		version = strings.TrimSpace(meta.LatestVersion.Version)
+	}
+	tag := strings.TrimSpace(source.Tag)
+	if version == "" && tag == "" {
+		tag = strings.TrimSpace(meta.Skill.Tags["latest"])
+	}
+	if version == "" && tag == "" {
+		return nil, fmt.Errorf("clawhub skill %q does not expose a latest version", source.Slug)
+	}
+
+	targetDir := filepath.Join(i.workspace, "skills", source.Slug)
+	if err := os.RemoveAll(targetDir); err != nil {
+		return nil, fmt.Errorf("failed to reset skill directory: %w", err)
+	}
+	if err := os.MkdirAll(targetDir, 0755); err != nil {
+		return nil, fmt.Errorf("failed to create skill directory: %w", err)
+	}
+
+	query := url.Values{}
+	query.Set("slug", source.Slug)
+	if version != "" {
+		query.Set("version", version)
+	} else {
+		query.Set("tag", tag)
+	}
+
+	zipURL := fmt.Sprintf("%s/api/v1/download?%s", strings.TrimRight(source.Registry, "/"), query.Encode())
+	zipPath := filepath.Join(i.workspace, fmt.Sprintf(".tmp_clawhub_%s.zip", source.Slug))
+	defer os.Remove(zipPath)
+
+	if err := i.downloadFileWithContext(ctx, zipURL, zipPath); err != nil {
+		return nil, fmt.Errorf("failed to download clawhub archive: %w", err)
+	}
+
+	if err := i.extractArchive(zipPath, targetDir); err != nil {
+		return nil, fmt.Errorf("failed to extract clawhub archive: %w", err)
+	}
+
+	resolvedVersion := version
+	if resolvedVersion == "" {
+		resolvedVersion = tag
+	}
+
+	return &InstallResult{
+		Name:     source.Slug,
+		Type:     "clawhub",
+		Location: targetDir,
+		Version:  resolvedVersion,
+		Source:   source.Slug,
+		Registry: strings.TrimRight(source.Registry, "/"),
+	}, nil
 }

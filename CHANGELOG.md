@@ -4,6 +4,10 @@
 
 ### Added
 
+- **技能市场新增 ClawHub 兼容层**：新增 ClawHub skill slug / 技能页 URL / API URL 解析与官方 registry 下载解压，桌面端技能市场改为从后端拉取统一推荐源，并支持直接安装 ClawHub 技能
+  - `internal/skills/clawhub.go`、`internal/skills/installer.go`、`internal/cli/skills.go`、`internal/webui/server.go`、`internal/webui/server_test.go`、`internal/cli/skills_test.go`、`internal/skills/clawhub_test.go`、`electron/src/renderer/views/SkillsView.tsx`、`electron/src/renderer/i18n/index.ts`
+  - 验证：`go test ./internal/skills ./internal/cli ./internal/webui`、`cd electron && npm run build`、`make build`
+
 - **README 截图更新为新的桌面界面预览**：将中英文 README 的产品截图切换为新的 `app_ui2.png` 画面，和当前桌面 UI 保持一致
   - `README.md`、`README.zh.md`、`screenshot/app_ui2.png`
   - 验证：`make build`
