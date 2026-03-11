@@ -256,9 +256,18 @@ func TestServiceStartStop(t *testing.T) {
 		return "done", nil
 	})
 
-	// 启动服务
-	err := service.Start()
-	require.NoError(t, err)
+	startErr := make(chan error, 1)
+	go func() {
+		startErr <- service.Start()
+	}()
+
+	select {
+	case err := <-startErr:
+		require.NoError(t, err)
+	case <-time.After(2 * time.Second):
+		t.Fatal("service.Start() blocked with enabled every job")
+	}
+
 	assert.True(t, service.IsRunning())
 
 	// 停止服务

@@ -30,6 +30,10 @@
 
 ### Fixed
 
+- **修复 Cron `every` 任务启动时的自锁死锁**：移除 `scheduleEveryJob` 内部对 `s.mu` 的重复加锁，避免 gateway 启动 cron 服务时因已启用的 `every` 任务卡死，连带导致 `/api/cron` 列表请求一直挂起；同时为 `Start/Stop` 增加超时回归测试
+  - `internal/cron/service.go`、`internal/cron/cron_test.go`
+  - 验证：`go test ./internal/cron ./internal/webui ./internal/cli`、`GOFLAGS='-modcacherw' ./e2e_test/run.sh`、`make build`
+
 - **聊天输入框顶部高光线外溢修复**：将 `Thread Composer` 顶部装饰白线放入圆角裁切层，避免 composer 保持 `overflow-visible` 时白线从左右上角露出
   - `electron/src/renderer/views/ChatView.tsx`
   - 验证：`bash e2e_test/run.sh`、`cd electron && npm run build`、`make build`

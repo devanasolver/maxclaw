@@ -1,6 +1,7 @@
 package cron
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -21,6 +22,7 @@ type NotificationFunc func(title, body string, data map[string]interface{})
 // Service 定时任务服务
 type Service struct {
 	jobs         map[string]*Job
+	cancelFuncs  map[string]context.CancelFunc // 用于取消每个任务的 goroutine
 	mu           sync.RWMutex
 	storePath    string
 	running      bool
@@ -35,10 +37,11 @@ type Service struct {
 // NewService 创建定时任务服务
 func NewService(storePath string) *Service {
 	s := &Service{
-		jobs:      make(map[string]*Job),
-		storePath: storePath,
-		stopChan:  make(chan struct{}),
-		cron:      cron.New(),
+		jobs:        make(map[string]*Job),
+		cancelFuncs: make(map[string]context.CancelFunc),
+		storePath:   storePath,
+		stopChan:    make(chan struct{}),
+		cron:        cron.New(),
 	}
 	s.load()
 
@@ -104,6 +107,12 @@ func (s *Service) RemoveJob(id string) bool {
 
 	if _, ok := s.jobs[id]; !ok {
 		return false
+	}
+
+	// 取消该任务的 goroutine
+	if cancel, ok := s.cancelFuncs[id]; ok {
+		cancel()
+		delete(s.cancelFuncs, id)
 	}
 
 	delete(s.jobs, id)
@@ -189,6 +198,12 @@ func (s *Service) Start() error {
 	s.running = true
 	s.stopChan = make(chan struct{})
 
+	// 清理所有旧的调度器（防止重复调度）
+	for id, cancel := range s.cancelFuncs {
+		cancel()
+		delete(s.cancelFuncs, id)
+	}
+
 	// 调度所有已启用的任务
 	for _, job := range s.jobs {
 		if job.Enabled {
@@ -223,7 +238,8 @@ func (s *Service) IsRunning() bool {
 	return s.running
 }
 
-// scheduleJob 调度单个任务
+// scheduleJob 调度单个任务。调用方必须先持有 s.mu，
+// 这样 every 任务在更新 cancelFuncs 时不会和 Start/AddJob 并发交错。
 func (s *Service) scheduleJob(job *Job) {
 	switch job.Schedule.Type {
 	case ScheduleTypeEvery:
@@ -243,9 +259,23 @@ func (s *Service) scheduleEveryJob(job *Job) {
 		return
 	}
 
+	// 检查是否已有该任务的调度器在运行，如果有则先停止
+	if cancel, ok := s.cancelFuncs[job.ID]; ok {
+		cancel()
+		delete(s.cancelFuncs, job.ID)
+		s.logCronf("cron stopped existing scheduler job_id=%s", job.ID)
+	}
+
+	// 创建可取消的 context
+	ctx, cancel := context.WithCancel(context.Background())
+
+	// 存储 cancelFunc，以便删除任务时可以停止 goroutine
+	s.cancelFuncs[job.ID] = cancel
+
 	s.wg.Add(1)
 	go func() {
 		defer s.wg.Done()
+		defer cancel()
 
 		ticker := time.NewTicker(duration)
 		defer ticker.Stop()
@@ -257,6 +287,10 @@ func (s *Service) scheduleEveryJob(job *Job) {
 					return
 				}
 				s.executeJob(job, "every")
+			case <-ctx.Done():
+				// 任务被删除或停止
+				s.logCronf("cron job stopped job_id=%s", job.ID)
+				return
 			case <-s.stopChan:
 				return
 			}
