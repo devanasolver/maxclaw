@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: maxclaw
+    env: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    autoDeploy: true
+    envVars:
+      - key: SETUP_PASSWORD
+        value: yourpassword
+      - key: MODEL_PROVIDER
+        value: openai   # or anthropic
+      - key: API_KEY
+        value: your_api_key_here
+    ports:
+      - port: 18890
+        protocol: tcp
