@@ -1,23 +1,29 @@
-FROM golang:1.24-alpine AS builder
+# Use official Go image for building
+FROM golang:1.24 AS builder
 
-WORKDIR /src
-COPY go.mod go.sum ./
-RUN go mod download
+WORKDIR /app
 
+# Install Node.js for frontend build
+RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
+    && apt-get install -y nodejs make
+
+# Copy source
 COPY . .
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /out/maxclaw cmd/maxclaw/main.go
 
-FROM alpine:3.20
-RUN adduser -D -h /home/maxclaw maxclaw && \
-    mkdir -p /home/maxclaw/.maxclaw && \
-    chown -R maxclaw:maxclaw /home/maxclaw
+# Build Maxclaw binary
+RUN make build
 
-USER maxclaw
-WORKDIR /home/maxclaw
+# Final runtime image
+FROM debian:stable-slim
 
-COPY --from=builder /out/maxclaw /usr/local/bin/maxclaw
+WORKDIR /app
 
-EXPOSE 18890 18791
+# Copy binary from builder
+COPY --from=builder /app/build/maxclaw /usr/local/bin/maxclaw
+COPY --from=builder /app/build/maxclaw-gateway /usr/local/bin/maxclaw-gateway
 
-ENTRYPOINT ["maxclaw"]
-CMD ["status"]
+# Expose default port
+EXPOSE 18890
+
+# Run gateway by default
+CMD ["maxclaw-gateway", "-p", "18890"]
